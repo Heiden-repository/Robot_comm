@@ -1,2 +1,0 @@
-Robot_comm
--DCATKIN_DEVEL_PREFIX=/home/heeseok/Robot_comm/devel -DCMAKE_INSTALL_PREFIX=/home/heeseok/Robot_comm/install -G Unix Makefiles
