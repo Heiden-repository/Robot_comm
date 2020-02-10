@@ -10,6 +10,6 @@ class Chic_m4k
         ros::Time stamp;
         std::string frame_id;
 
-        
+        float 
     };
 };

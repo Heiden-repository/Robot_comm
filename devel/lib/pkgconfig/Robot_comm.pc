@@ -1,0 +1,8 @@
+prefix=/home/heeseok/Robot_comm/devel
+
+Name: Robot_comm
+Description: Description of Robot_comm
+Version: 0.0.0
+Cflags: -I/home/heeseok/Robot_comm/src/Robot_comm/include
+Libs: -L/home/heeseok/Robot_comm/devel/lib -lRobot_comm
+Requires: message_generation roscpp std_msgs
