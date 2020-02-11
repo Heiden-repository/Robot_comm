@@ -60,10 +60,10 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include/robot/
 )
 
-add_executable(${PROJECT_NAME}_node src/Robot/src/chic_m4k.cpp src/Robot/src/main.cpp)
+add_executable(CHIC_M4K src/Robot/src/chic_m4k.cpp src/Robot/src/main.cpp)
 
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(CHIC_M4K ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(CHIC_M4K
   ${catkin_LIBRARIES}
 )

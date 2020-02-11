@@ -11,6 +11,5 @@ int main(int argc, char **argv)
 
     Chic_m4k robot_cmm(n);
     robot_cmm.runLoop();
-    
     return 0;
 }
