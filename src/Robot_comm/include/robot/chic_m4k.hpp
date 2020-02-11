@@ -41,7 +41,8 @@ private:
     unsigned char dataBuffer[buffer_size];
 
     //protocol
-    unsigned char serial_protocol[serial_protocol_size];
+    unsigned char send_serial_protocol[serial_protocol_size];
+    unsigned char receive_serial_protocol[serial_protocol_size];
     unsigned char encoder_protocol[encoder_protocol_size];
 
     //Publisher
@@ -58,6 +59,7 @@ private:
     void send_serial(void);
     void receive_serial(void);
     void send_receive_serial(void);
+    void receive_encoder(void);
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
@@ -72,6 +74,7 @@ public:
         initValue();
         initSubscriber(nh_);
         serial_connect();
-        send_serial();
+        send_receive_serial();
+        receive_encoder();
     }
 };
