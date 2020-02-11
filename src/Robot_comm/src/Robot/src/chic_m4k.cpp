@@ -41,32 +41,45 @@ bool Chic_m4k::serial_connect()
             break;
     }
     ROS_INFO("Robot_connection");
+}
 
-    // memset(&tty, 0, sizeof(tty));
+void Chic_m4k::send_serial()
+{
+    serial_protocol[0] = 0xFF;
+    serial_protocol[1] = 0x07;
+    serial_protocol[2] = 0x04;
+    serial_protocol[3] = 0x05;
 
-    // if (tcgetattr(serial_port, &tty) != 0)
-    // {
-    //     printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
-    // }
+    serial_protocol[4] = Linear_velocity;
+    serial_protocol[5] = angular_velocity;
 
-    // tty.c_cflag &= ~PARENB;
-    // tty.c_cflag &= ~CSTOPB;
-    // tty.c_cflag |= CS7;
-    // tty.c_cflag &= ~CRTSCTS;
+    serial_protocol[6] = CalcChecksum(serial_protocol,serial_protocol_size);
 
-    // // tty.c_cflag = B57600;  //1 stop bit
-    // tty.c_cflag |= CS7;    // data length 8bit
-    // tty.c_cflag |= CLOCAL; // Use iternel commutication port
-    // tty.c_cflag |= CREAD;  // enable read & write
-    // // tty.c_iflag = 0;       // no parity bit
-    // // tty.c_oflag = 0;
-    // // tty.c_lflag = 0;
-    // // tty.c_cc[VTIME] = 0;
-    // // tty.c_cc[VMIN] = 0;
+    if(serial_port > 0) 
+    {int val = write(serial_port, serial_protocol, serial_protocol_size);
+    ROS_INFO("send data size : %d",val);
+    }
+}
 
-    // tcflush (serial_port, TCIFLUSH );
-    // tcsetattr(serial_port, TCSANOW, &tty );
+void Chic_m4k::receive_serial()
+{
+    
+}
 
+void Chic_m4k::send_receive_serial()
+{
+    
+}
+
+unsigned char Chic_m4k::CalcChecksum(unsigned char* data, int leng)
+{
+    unsigned char csum;
+
+    csum = 0xFF;
+    for(;leng>0; leng--)
+        csum += *data++;
+
+    return ~csum;
 }
 
 void Chic_m4k::runLoop()

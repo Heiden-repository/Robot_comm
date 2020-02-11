@@ -11,6 +11,10 @@
 #define JOY_BUTTON_AMOUNT 12
 #define JOY_AXES_AMOUNT 6
 
+#define serial_protocol_size 7
+#define encoder_protocol_size 13
+#define buffer_size 24
+
 class Chic_m4k
 {
 private:
@@ -30,6 +34,16 @@ private:
     std::string topic_name;
     Joy_msg joy_msg;
 
+    unsigned char Linear_velocity;
+    unsigned char angular_velocity;
+
+    //buffer
+    unsigned char dataBuffer[buffer_size];
+
+    //protocol
+    unsigned char serial_protocol[serial_protocol_size];
+    unsigned char encoder_protocol[encoder_protocol_size];
+
     //Publisher
     ros::Publisher serial_pub_;
 
@@ -45,6 +59,8 @@ private:
     void receive_serial(void);
     void send_receive_serial(void);
 
+    unsigned char CalcChecksum(unsigned char* data, int leng);
+
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
     
 public:
@@ -56,5 +72,6 @@ public:
         initValue();
         initSubscriber(nh_);
         serial_connect();
+        send_serial();
     }
 };
