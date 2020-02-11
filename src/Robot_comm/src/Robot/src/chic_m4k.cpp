@@ -41,6 +41,7 @@ bool Chic_m4k::serial_connect()
             break;
     }
     ROS_INFO("Robot_connection");
+    ROS_INFO("serial_port in serial_connect : %d", serial_port);
 }
 
 void Chic_m4k::send_serial()
@@ -53,11 +54,14 @@ void Chic_m4k::send_serial()
     serial_protocol[4] = Linear_velocity;
     serial_protocol[5] = angular_velocity;
 
-    serial_protocol[6] = CalcChecksum(serial_protocol,serial_protocol_size);
+    serial_protocol[6] = CalcChecksum(serial_protocol, serial_protocol_size);
 
-    if(serial_port > 0) 
-    {int val = write(serial_port, serial_protocol, serial_protocol_size);
-    ROS_INFO("send data size : %d",val);
+    ROS_INFO("serial_port in send_serial : %d", serial_port);
+
+    if (serial_port > 0)
+    {
+        int val = write(serial_port, serial_protocol, serial_protocol_size);
+        ROS_INFO("send data size : %d", val);
     }
 }
 

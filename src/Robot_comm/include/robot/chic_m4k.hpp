@@ -67,7 +67,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh)
+    nh_(_nh),Linear_velocity(0x02),angular_velocity(0xFF)
     {
         initValue();
         initSubscriber(nh_);
