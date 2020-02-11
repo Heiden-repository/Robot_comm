@@ -87,6 +87,7 @@ void Chic_m4k::send_receive_serial()
     if (serial_port > 0)
     {
         int val = write(serial_port, send_serial_protocol, serial_protocol_size);
+        std::cout << "val : " << val << std::endl;
     }
 
     memset(receive_serial_protocol, 0, serial_protocol_size);

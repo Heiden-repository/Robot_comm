@@ -77,4 +77,9 @@ public:
         send_receive_serial();
         receive_encoder();
     }
+
+    ~Chic_m4k()
+    {
+        close(serial_port);
+    }
 };
