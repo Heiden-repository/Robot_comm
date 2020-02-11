@@ -17,7 +17,7 @@ void Chic_m4k::initPublisher()
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
 {
-
+    
 }
 
 void Chic_m4k::runLoop()

@@ -1,5 +1,5 @@
 #Directories
-/build/
-/bin/
-/devel/
-/.vscode/
+build/
+bin/
+devel/
+.vscode/
