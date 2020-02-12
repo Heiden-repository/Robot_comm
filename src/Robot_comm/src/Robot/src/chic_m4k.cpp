@@ -97,6 +97,16 @@ void Chic_m4k::send_receive_serial()
         ros::Rate rate(1);
         while (ros::ok())
         {
+            send_serial_protocol[0] = 0xFF << 4;
+            send_serial_protocol[0] = 0x07;
+            send_serial_protocol[1] = 0x04 << 4;
+            send_serial_protocol[1] = 0x05;
+            send_serial_protocol[2] = Linear_velocity;
+            send_serial_protocol[3] = angular_velocity;
+            send_serial_protocol[4] = CalcChecksum(send_serial_protocol, serial_protocol_size);
+
+            if(0)
+            {
             send_serial_protocol[0] = 0xFF;
             send_serial_protocol[1] = 0x07;
             send_serial_protocol[2] = 0x04;
@@ -106,10 +116,13 @@ void Chic_m4k::send_receive_serial()
             send_serial_protocol[5] = angular_velocity;
 
             send_serial_protocol[6] = CalcChecksum(send_serial_protocol, serial_protocol_size);
-
+            }
+            
             if (serial_port > 0)
             {
-                int val = write(serial_port, send_serial_protocol, serial_protocol_size);
+                //int val = write(serial_port, send_serial_protocol, serial_protocol_size);
+                int val = write(serial_port, send_serial_protocol, 5);
+
                 std::cout << "val : " << val << std::endl;
             }
             rate.sleep();
