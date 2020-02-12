@@ -61,6 +61,8 @@ private:
     void send_receive_serial(void);
     void receive_encoder(void);
 
+    std::thread send_thread,recv_thread;
+
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
