@@ -11,7 +11,8 @@
 #define JOY_BUTTON_AMOUNT 12
 #define JOY_AXES_AMOUNT 6
 
-#define serial_protocol_size 7
+#define send_serial_protocol_size 5
+#define recv_serial_protocol_size 4
 #define encoder_protocol_size 13
 #define buffer_size 24
 
@@ -41,8 +42,8 @@ private:
     unsigned char dataBuffer[buffer_size];
 
     //protocol
-    unsigned char send_serial_protocol[serial_protocol_size];
-    unsigned char receive_serial_protocol[serial_protocol_size];
+    unsigned char send_serial_protocol[send_serial_protocol_size];
+    unsigned char receive_serial_protocol[recv_serial_protocol_size];
     unsigned char encoder_protocol[encoder_protocol_size];
 
     //Publisher
@@ -71,7 +72,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),Linear_velocity(0x02),angular_velocity(0xFF)
+    nh_(_nh),Linear_velocity(0x7F),angular_velocity(0x00)
     {
         initValue();
         initSubscriber(nh_);

@@ -63,7 +63,7 @@ bool Chic_m4k::serial_connect()
 
 void Chic_m4k::send_serial()
 {
-    memset(send_serial_protocol, 0, serial_protocol_size);
+    memset(send_serial_protocol, 0, send_serial_protocol_size);
     send_serial_protocol[0] = 0xFF;
     send_serial_protocol[1] = 0x07;
     send_serial_protocol[2] = 0x04;
@@ -72,17 +72,17 @@ void Chic_m4k::send_serial()
     send_serial_protocol[4] = Linear_velocity;
     send_serial_protocol[5] = angular_velocity;
 
-    send_serial_protocol[6] = CalcChecksum(send_serial_protocol, serial_protocol_size);
+    send_serial_protocol[6] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
 
     if (serial_port > 0)
     {
-        int val = write(serial_port, send_serial_protocol, serial_protocol_size);
+        int val = write(serial_port, send_serial_protocol, send_serial_protocol_size);
     }
 }
 
 void Chic_m4k::receive_serial()
 {
-    memset(receive_serial_protocol, 0, serial_protocol_size);
+    memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
     int read_size = read(serial_port, receive_serial_protocol, 24);
 
@@ -92,7 +92,6 @@ void Chic_m4k::receive_serial()
 
 void Chic_m4k::send_receive_serial()
 {
-
     send_thread = std::thread([&]() {
         ros::Rate rate(1);
         while (ros::ok())
@@ -103,27 +102,13 @@ void Chic_m4k::send_receive_serial()
             send_serial_protocol[1] = 0x05;
             send_serial_protocol[2] = Linear_velocity;
             send_serial_protocol[3] = angular_velocity;
-            send_serial_protocol[4] = CalcChecksum(send_serial_protocol, serial_protocol_size);
+            send_serial_protocol[4] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
 
-            if(0)
-            {
-            send_serial_protocol[0] = 0xFF;
-            send_serial_protocol[1] = 0x07;
-            send_serial_protocol[2] = 0x04;
-            send_serial_protocol[3] = 0x05;
-
-            send_serial_protocol[4] = Linear_velocity;
-            send_serial_protocol[5] = angular_velocity;
-
-            send_serial_protocol[6] = CalcChecksum(send_serial_protocol, serial_protocol_size);
-            }
-            
             if (serial_port > 0)
             {
-                //int val = write(serial_port, send_serial_protocol, serial_protocol_size);
-                int val = write(serial_port, send_serial_protocol, 5);
+                int write_size = write(serial_port, send_serial_protocol, 5);
 
-                std::cout << "val : " << val << std::endl;
+                std::cout << "serial_write_size : " << write_size << std::endl;
             }
             rate.sleep();
         }
@@ -132,7 +117,7 @@ void Chic_m4k::send_receive_serial()
     recv_thread = std::thread([&]() {
         while (ros::ok())
         {
-            memset(receive_serial_protocol, 0, serial_protocol_size);
+            memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
             int read_size = read(serial_port, receive_serial_protocol, 24);
             if(read_size > 0)
@@ -146,7 +131,7 @@ void Chic_m4k::receive_encoder()
     recv_encoder_thread = std::thread([&]() {
         while (ros::ok())
         {
-            memset(encoder_protocol, 0, serial_protocol_size);
+            memset(encoder_protocol, 0, recv_serial_protocol_size);
 
             int read_size = read(serial_port, encoder_protocol, 24);
             if (read_size > 0)
