@@ -61,7 +61,7 @@ private:
     void send_receive_serial(void);
     void receive_encoder(void);
 
-    std::thread send_thread,recv_thread;
+    std::thread send_thread,recv_thread,recv_encoder_thread;
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
