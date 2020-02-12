@@ -122,10 +122,8 @@ void Chic_m4k::send_receive_serial()
             memset(receive_serial_protocol, 0, serial_protocol_size);
 
             int read_size = read(serial_port, receive_serial_protocol, 24);
-
-            std::cout << "serial_read_size : " << read_size << std::endl;
-            for (int i = 0; i < read_size; i++)
-                std::cout << "receive_serial_protocol[" << i << "] : " << receive_serial_protocol[i] << std::endl;
+            if(read_size > 0)
+                std::cout << "serial_read_size : " << read_size << std::endl;
         }
     });
 }
@@ -138,9 +136,12 @@ void Chic_m4k::receive_encoder()
             memset(encoder_protocol, 0, serial_protocol_size);
 
             int read_size = read(serial_port, encoder_protocol, 24);
-            std::cout << "encoder_read_size : " << read_size << std::endl;
-            for (int i = 0; i < read_size; i++)
-                std::cout << "encoder_protocol[" << i << "] : " << encoder_protocol[i] << std::endl;
+            if (read_size > 0)
+            {
+                std::cout << "encoder_read_size : " << read_size << std::endl;
+                for (int i = 0; i < read_size; i++)
+                    std::cout << "encoder_protocol[" << i << "] : " << encoder_protocol[i] << std::endl;
+            }
         }
     });
 }
