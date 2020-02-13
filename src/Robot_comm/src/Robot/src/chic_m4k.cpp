@@ -21,6 +21,7 @@ void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
     augular = _joy_msg->axes[1];
 
     toggle_button = _joy_msg->buttons[6];
+    convert_cmd_vel();
 }
 
 void Chic_m4k::convert_cmd_vel()

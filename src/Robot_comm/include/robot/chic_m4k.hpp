@@ -66,7 +66,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0)
+    nh_(_nh),toggle_button(0),linear(0),augular(0),Linear_velocity(127),angular_velocity(127)
     {
         initValue();
         initSubscriber(nh_);
