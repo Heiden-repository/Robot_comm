@@ -11,8 +11,8 @@
 #define JOY_BUTTON_AMOUNT 12
 #define JOY_AXES_AMOUNT 6
 
-#define send_serial_protocol_size 5
-#define recv_serial_protocol_size 4
+#define send_serial_protocol_size 7
+#define recv_serial_protocol_size 7
 #define encoder_protocol_size 13
 #define buffer_size 24
 
