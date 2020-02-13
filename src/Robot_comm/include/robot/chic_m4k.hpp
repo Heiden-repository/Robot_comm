@@ -19,24 +19,17 @@
 class Chic_m4k
 {
 private:
-    typedef struct _Joy_msg
-    {
-        unsigned int seq;
-        ros::Time stamp;
-        std::string frame_id;
-
-        float buttons[JOY_BUTTON_AMOUNT];
-        float axes[JOY_AXES_AMOUNT];
-    } Joy_msg;
-
     ros::NodeHandle nh_;
-    
     int serial_port;
     std::string topic_name;
-    Joy_msg joy_msg;
 
     unsigned char Linear_velocity;
     unsigned char angular_velocity;
+
+    float linear;
+    float augular;
+
+    bool toggle_button;
 
     //buffer
     unsigned char dataBuffer[buffer_size];
@@ -67,12 +60,13 @@ private:
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
+    void convert_cmd_vel();
     
 public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),Linear_velocity(0x7F),angular_velocity(0x00)
+    nh_(_nh),toggle_button(0)
     {
         initValue();
         initSubscriber(nh_);
