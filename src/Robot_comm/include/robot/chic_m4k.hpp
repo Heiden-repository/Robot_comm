@@ -2,6 +2,7 @@
 #include <sensor_msgs/Joy.h>
 
 #include <thread>
+#include <mutex>
 
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
@@ -12,7 +13,7 @@
 #define JOY_AXES_AMOUNT 6
 
 #define send_serial_protocol_size 7
-#define recv_serial_protocol_size 7
+#define recv_serial_protocol_size 6
 #define encoder_protocol_size 13
 #define buffer_size 24
 
@@ -23,8 +24,8 @@ private:
     int serial_port;
     std::string topic_name;
 
-    unsigned char Linear_velocity;
-    unsigned char angular_velocity;
+    float Linear_velocity;
+    float angular_velocity;
 
     float linear;
     float angular;
@@ -45,6 +46,9 @@ private:
     //Subscriber
     ros::Subscriber joy_msg_sub_;
 
+    std::thread encoder_thread;
+    std::mutex encoder_mtx;
+
     void initValue(void);
     void initSubscriber(ros::NodeHandle& nh_);
     void initPublisher(void);
@@ -55,7 +59,7 @@ private:
     void send_receive_serial(void);
     void receive_encoder(void);
 
-    void set_val(unsigned char& Linear_velocity,unsigned char& angular_velocity);
+    void set_val(float Linear_velocity,float angular_velocity);
     void get_val();
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
@@ -67,12 +71,13 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(127),angular_velocity(127)
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(127.0f),angular_velocity(127.0f)
     {
         initValue();
         initSubscriber(nh_);
         serial_connect();
         send_receive_serial();
+        //set_val(255.0f,0.0f);
     }
 
     ~Chic_m4k()

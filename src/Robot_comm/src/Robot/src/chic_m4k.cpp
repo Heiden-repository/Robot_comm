@@ -126,16 +126,28 @@ void Chic_m4k::send_receive_serial()
 
     memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
-    int read_size = read(serial_port, receive_serial_protocol, 7);
+    int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
     if (read_size > 0)
     {
         printf("read_size : %d\n", read_size);
         for (int i = 0; i < read_size; i++)
             printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
     }
+    encoder_thread = std::thread([&]() {
+        ros::Rate rate(1);
+        while (ros::ok())
+        {
+            memset(encoder_protocol, 0, encoder_protocol_size);
+
+            int encoder_read_size = read(serial_port, encoder_protocol, encoder_protocol_size);
+            for (int i = 0; i < encoder_read_size; i++)
+                printf("encoder_protocol[%d] : %u\n", i, encoder_protocol[i]);
+            rate.sleep();
+        }
+    });
 }
 
-void Chic_m4k::set_val(unsigned char& Linear_velocity,unsigned char& angular_velocity)
+void Chic_m4k::set_val(float Linear_velocity, float angular_velocity)
 {
     memset(send_serial_protocol, 0, send_serial_protocol_size);
     send_serial_protocol[0] = 0xFF;
@@ -161,6 +173,12 @@ void Chic_m4k::set_val(unsigned char& Linear_velocity,unsigned char& angular_vel
     {
         printf("read_size : %d\n", read_size);
         for (int i = 0; i < read_size; i++)
+            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+    }
+    while(true)
+    {
+        int encoder_read_size = read(serial_port, encoder_protocol, 13);
+        for (int i = 0; i < encoder_read_size; i++)
             printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
     }
 }
