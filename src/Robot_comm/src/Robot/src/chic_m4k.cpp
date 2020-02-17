@@ -17,11 +17,12 @@ void Chic_m4k::initPublisher()
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
 {
-    linear = _joy_msg->axes[0];
-    augular = _joy_msg->axes[1];
+    angular = _joy_msg->axes[0];
+    linear = _joy_msg->axes[1];
 
     toggle_button = _joy_msg->buttons[6];
     convert_cmd_vel();
+    send_receive_serial();
 }
 
 void Chic_m4k::convert_cmd_vel()
@@ -29,7 +30,7 @@ void Chic_m4k::convert_cmd_vel()
     if(toggle_button)
     {
         Linear_velocity = (linear + 1)*127;
-        angular_velocity = (augular + 1)*127;
+        angular_velocity = (angular + 1)*127;
     }
     else
     {
@@ -90,7 +91,7 @@ void Chic_m4k::send_serial()
     {
         int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
-        printf("write_size : %d\n",write_size);
+        printf("write_size : %d\n", write_size);
     }
 }
 
@@ -98,54 +99,75 @@ void Chic_m4k::receive_serial()
 {
     memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
-    int read_size = read(serial_port, receive_serial_protocol, 24);
+    int read_size = read(serial_port, receive_serial_protocol, 7);
 
     for (int i = 0; i < read_size; i++)
-        printf("receive_serial_protocol[%d] : %u\n",i,receive_serial_protocol[i]);
+        printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
 }
 
 void Chic_m4k::send_receive_serial()
 {
-    send_thread = std::thread([&]() {
-        ros::Rate rate(60);
-        while (ros::ok())
-        {
-            memset(send_serial_protocol, 0, send_serial_protocol_size);
-            send_serial_protocol[0] = 0xFF;
-            send_serial_protocol[1] = 0x07;
-            send_serial_protocol[2] = 0x04;
-            send_serial_protocol[3] = 0x05;
-            
-            send_serial_protocol[4] = (unsigned char)Linear_velocity;
-            send_serial_protocol[5] = (unsigned char)angular_velocity;
-            send_serial_protocol[6] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
+    memset(send_serial_protocol, 0, send_serial_protocol_size);
+    send_serial_protocol[0] = 0xFF;
+    send_serial_protocol[1] = 0x07;
+    send_serial_protocol[2] = 0x04;
+    send_serial_protocol[3] = 0x05;
 
-            if (serial_port > 0)
-            {
-                int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
+    send_serial_protocol[4] = (unsigned char)Linear_velocity;
+    send_serial_protocol[5] = (unsigned char)angular_velocity;
+    send_serial_protocol[6] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
 
-                printf("write_size : %d\n",write_size);
-            }
-            rate.sleep();
-        }
-    });
+    if (serial_port > 0)
+    {
+        int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
-    recv_thread = std::thread([&]() {
-        ros::Rate rate(1);
-        while (ros::ok())
-        {
-            memset(receive_serial_protocol, 0, recv_serial_protocol_size);
+        printf("write_size : %d\n", write_size);
+    }
 
-            int read_size = read(serial_port, receive_serial_protocol, 24);
-            if (read_size > 0)
-            {
-                printf("read_size : %d\n",read_size);
-                for(int i=0; i <read_size; i++)
-                    printf("receive_serial_protocol[%d] : %u\n",i,receive_serial_protocol[i]);
-            }
-            rate.sleep();
-        }
-    });
+    memset(receive_serial_protocol, 0, recv_serial_protocol_size);
+
+    int read_size = read(serial_port, receive_serial_protocol, 7);
+    if (read_size > 0)
+    {
+        printf("read_size : %d\n", read_size);
+        for (int i = 0; i < read_size; i++)
+            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+    }
+}
+
+void Chic_m4k::set_val(unsigned char& Linear_velocity,unsigned char& angular_velocity)
+{
+    memset(send_serial_protocol, 0, send_serial_protocol_size);
+    send_serial_protocol[0] = 0xFF;
+    send_serial_protocol[1] = 0x07;
+    send_serial_protocol[2] = 0x04;
+    send_serial_protocol[3] = 0x05;
+
+    send_serial_protocol[4] = (unsigned char)Linear_velocity;
+    send_serial_protocol[5] = (unsigned char)angular_velocity;
+    send_serial_protocol[6] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
+
+    if (serial_port > 0)
+    {
+        int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
+
+        printf("write_size : %d\n", write_size);
+    }
+
+    memset(receive_serial_protocol, 0, recv_serial_protocol_size);
+
+    int read_size = read(serial_port, receive_serial_protocol, 7);
+    if (read_size > 0)
+    {
+        printf("read_size : %d\n", read_size);
+        for (int i = 0; i < read_size; i++)
+            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+    }
+}
+
+void Chic_m4k::get_val()
+{
+
 }
 
 void Chic_m4k::receive_encoder()

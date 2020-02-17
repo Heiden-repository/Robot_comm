@@ -27,7 +27,7 @@ private:
     unsigned char angular_velocity;
 
     float linear;
-    float augular;
+    float angular;
 
     bool toggle_button;
 
@@ -55,7 +55,8 @@ private:
     void send_receive_serial(void);
     void receive_encoder(void);
 
-    std::thread send_thread,recv_thread,recv_encoder_thread;
+    void set_val(unsigned char& Linear_velocity,unsigned char& angular_velocity);
+    void get_val();
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
@@ -66,13 +67,12 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),augular(0),Linear_velocity(127),angular_velocity(127)
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(127),angular_velocity(127)
     {
         initValue();
         initSubscriber(nh_);
         serial_connect();
         send_receive_serial();
-        receive_encoder();
     }
 
     ~Chic_m4k()
