@@ -16,6 +16,9 @@
 #define recv_serial_protocol_size 6
 #define encoder_protocol_size 13
 #define buffer_size 24
+#define max_encoder_value_change 500
+#define velocity_zero 127
+#define max_encoder_output 4096
 
 class Chic_m4k
 {
@@ -30,6 +33,11 @@ private:
     float linear;
     float angular;
 
+    unsigned int LEncoder, REncoder;
+    int temp_LEncoder, temp_REncoder;
+
+    int max_encoder;
+    
     bool toggle_button;
 
     //buffer
@@ -46,7 +54,7 @@ private:
     //Subscriber
     ros::Subscriber joy_msg_sub_;
 
-    std::thread send_receive_thread,encoder_thread;
+    std::thread send_receive_thread;
     std::mutex encoder_mtx;
 
     void initValue(void);
@@ -58,6 +66,7 @@ private:
     void receive_serial(void);
     void send_receive_serial(void);
     void receive_encoder(void);
+    void count_revolution(void);
 
     void set_val(float Linear_velocity,float angular_velocity);
     void get_val();
@@ -68,16 +77,21 @@ private:
     void convert_cmd_vel();
     
 public:
+    int LeftEncoder, RightEncoder;
+
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(127.0f),angular_velocity(127.0f)
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),
+    temp_LEncoder(-1),temp_REncoder(-1),LeftEncoder(0),RightEncoder(0)
     {
         initValue();
         initSubscriber(nh_);
         serial_connect();
         send_receive_serial();
+
         receive_encoder();
+
         //set_val(255.0f,0.0f);
     }
 
