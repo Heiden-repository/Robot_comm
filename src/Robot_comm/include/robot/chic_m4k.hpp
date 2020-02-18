@@ -46,7 +46,7 @@ private:
     //Subscriber
     ros::Subscriber joy_msg_sub_;
 
-    std::thread encoder_thread;
+    std::thread send_receive_thread,encoder_thread;
     std::mutex encoder_mtx;
 
     void initValue(void);
@@ -77,6 +77,7 @@ public:
         initSubscriber(nh_);
         serial_connect();
         send_receive_serial();
+        receive_encoder();
         //set_val(255.0f,0.0f);
     }
 
