@@ -30,6 +30,9 @@ private:
     float linear;
     float angular;
 
+    
+    unsigned int LEncoder, REncoder;
+    
     bool toggle_button;
 
     //buffer
@@ -46,7 +49,7 @@ private:
     //Subscriber
     ros::Subscriber joy_msg_sub_;
 
-    std::thread encoder_thread;
+    std::thread send_receive_thread,encoder_thread;
     std::mutex encoder_mtx;
 
     void initValue(void);
@@ -68,6 +71,8 @@ private:
     void convert_cmd_vel();
     
 public:
+    int LeftEncoder, RightEncoder;
+
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
@@ -77,6 +82,7 @@ public:
         initSubscriber(nh_);
         serial_connect();
         send_receive_serial();
+        //receive_encoder();
         //set_val(255.0f,0.0f);
     }
 
