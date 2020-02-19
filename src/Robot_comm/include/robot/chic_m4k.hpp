@@ -16,9 +16,10 @@
 #define recv_serial_protocol_size 6
 #define encoder_protocol_size 13
 #define buffer_size 24
-#define max_encoder_value_change 500
+#define gear_ratio 6.2
 #define velocity_zero 127
 #define max_encoder_output 4096
+#define max_encoder_value_change 2000
 
 class Chic_m4k
 {
@@ -34,9 +35,10 @@ private:
     float angular;
 
     unsigned int LEncoder, REncoder;
-    int temp_LEncoder, temp_REncoder;
+    int prev_LEncoder, prev_REncoder;
 
-    int max_encoder;
+    float encoder_per_wheel;
+    int Lencoder_change,Rencoder_change;
     
     bool toggle_button;
 
@@ -82,8 +84,8 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),
-    temp_LEncoder(-1),temp_REncoder(-1),LeftEncoder(0),RightEncoder(0)
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),
+    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0)
     {
         initValue();
         initSubscriber(nh_);

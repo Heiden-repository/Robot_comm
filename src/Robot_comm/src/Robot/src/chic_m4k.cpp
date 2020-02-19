@@ -71,7 +71,7 @@ bool Chic_m4k::serial_connect()
     tcflush(serial_port, TCIFLUSH);
     tcsetattr(serial_port, TCSANOW, &termi);
 
-    printf("Robot connection");
+    printf("Robot connection\n");
 }
 
 void Chic_m4k::send_serial()
@@ -130,8 +130,8 @@ void Chic_m4k::send_receive_serial()
         int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
 
         printf("read_size : %d\n", read_size);
-        for (int i = 0; i < read_size; i++)
-            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+        // for (int i = 0; i < read_size; i++)
+        //     printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
 
         encoder_mtx.unlock();
 }
@@ -217,12 +217,12 @@ void Chic_m4k::receive_encoder()
                             //std::memcpy(&LEncoder, &encoder_protocol[2], sizeof(int));
                             //std::memcpy(&REncoder, &encoder_protocol[6], sizeof(int));
                             printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
-                            printf("LeftEncoder: %u    RightEncoder: %u   \n", LeftEncoder, RightEncoder);  
                             count_revolution();
                             break;
                       }
                   }
-                  else{
+                  else
+                  {
                       break;
                   }
               }
@@ -233,45 +233,85 @@ void Chic_m4k::receive_encoder()
 
 void Chic_m4k::count_revolution()
 {
-    if (temp_LEncoder == -1)
-    {
-        temp_LEncoder = LEncoder;
-    }
-    else if (temp_LEncoder > LEncoder && temp_LEncoder - LEncoder > max_encoder_value_change)
-    {
-        LeftEncoder += 1;
-        temp_LEncoder = LEncoder;
-    }
-    else if (temp_LEncoder < LEncoder && LEncoder - temp_LEncoder > max_encoder_value_change)
-    {
-        LeftEncoder -= 1;
-        temp_LEncoder = LEncoder;
-    }
-    else
-    {
-        temp_LEncoder = LEncoder;
-    }
-    
+    if (prev_LEncoder != -1)
+        prev_LEncoder = LEncoder;
 
-    if (temp_REncoder == -1)
+    int dL_Enc = LEncoder - prev_LEncoder;
+    if (abs(dL_Enc) > max_encoder_value_change)
     {
-        temp_REncoder = REncoder;
+        if (dL_Enc > 0)
+            dL_Enc -= max_encoder_output;
+        else
+            dL_Enc += max_encoder_output;
     }
-    else if (temp_REncoder > REncoder && temp_REncoder - REncoder > max_encoder_value_change)
+
+    if (prev_REncoder != -1)
+        prev_REncoder = REncoder;
+
+    int dR_Enc = REncoder - prev_REncoder;
+    if (abs(dR_Enc) > max_encoder_value_change)
     {
-        RightEncoder += 1;
-        temp_REncoder = REncoder;
+        if (dR_Enc > 0)
+            dR_Enc -= max_encoder_output;
+        else
+            dR_Enc += max_encoder_output;
     }
-    else if (temp_REncoder < REncoder && REncoder - temp_REncoder > max_encoder_value_change)
-    {
-        RightEncoder -= 1;
-        temp_REncoder = REncoder;
-    }
-    else
-    {
-        temp_REncoder = REncoder;
-    }
-    
+
+    // if (prev_LEncoder != -1)
+    // {
+
+    //     int dL_Enc = LEncoder - prev_LEncoder;
+    //     if (abs(dL_Enc) > max_encoder_value_change)
+    //     {
+    //         if (dL_Enc > 0)
+    //             dL_Enc -= max_encoder_output;
+    //         else
+    //             dL_Enc += max_encoder_output;
+    //         Lencoder_change += dL_Enc;
+    //     }
+    //     else
+    //     {
+    //         Lencoder_change += dL_Enc;
+    //     }
+    // }
+    // else
+    // {
+    //     prev_LEncoder = LEncoder;
+    // }
+
+    // if (prev_REncoder != -1)
+    // {
+
+    //     int dR_Enc = REncoder - prev_REncoder;
+    //     if (abs(dR_Enc) > max_encoder_value_change)
+    //     {
+    //         if (dR_Enc > 0)
+    //             dR_Enc -= max_encoder_output;
+    //         else
+    //             dR_Enc += max_encoder_output;
+    //         Rencoder_change += dR_Enc;
+    //     }
+    //     else
+    //     {
+    //         Rencoder_change += dR_Enc;
+    //     }
+    // }
+    // else
+    // {
+    //     prev_REncoder = REncoder;
+    // }
+
+    // if (Lencoder_change > encoder_per_wheel)
+    //     LeftEncoder++;
+    // else if (Lencoder_change < -encoder_per_wheel)
+    //     LeftEncoder--;
+
+    // if (Rencoder_change > encoder_per_wheel)
+    //     RightEncoder++;
+    // else if (Rencoder_change < -encoder_per_wheel)
+    //     RightEncoder--;
+
+    // printf("LeftEncoder : %d , RightEncoder : %d ",LeftEncoder,RightEncoder);
 }
 
 unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
