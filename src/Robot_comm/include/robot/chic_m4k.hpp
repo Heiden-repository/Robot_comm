@@ -20,6 +20,7 @@
 #define velocity_zero 127
 #define max_encoder_output 4096
 #define max_encoder_value_change 2000
+#define PI = 3.141592
 
 class Chic_m4k
 {
@@ -39,8 +40,16 @@ private:
 
     float encoder_per_wheel;
     int Lencoder_change,Rencoder_change;
+    int temp_Lencoder_change,temp_Rencoder_change;
+    double wheelsize,wheelbase;
+    double dist_R,dist_L;
+    
+    double _x,_y,_th;
     
     bool toggle_button;
+
+    double counter2dist;
+    double angle2radian = 3.141592 / 180.0;
 
     //buffer
     unsigned char dataBuffer[buffer_size];
@@ -69,9 +78,12 @@ private:
     void send_receive_serial(void);
     void receive_encoder(void);
     void count_revolution(void);
+    void odom_generator(int& difference_Lencoder,int& difference_Rencoder);
+    void add_motion(double& gap_x,double& gap_y,double& gap_th);
 
     void set_val(float Linear_velocity,float angular_velocity);
     void get_val();
+    void angleRearange();
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
@@ -85,14 +97,11 @@ public:
 
     Chic_m4k(ros::NodeHandle &_nh):
     nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),
-    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0)
+    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0)
     {
         initValue();
         initSubscriber(nh_);
         serial_connect();
-        send_receive_serial();
-
-        receive_encoder();
 
         //set_val(255.0f,0.0f);
     }

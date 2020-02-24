@@ -17,7 +17,7 @@ void Chic_m4k::initPublisher()
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
 {
-    angular = _joy_msg->axes[0];
+    angular = _joy_msg->axes[0]*-1;
     linear = _joy_msg->axes[1];
 
     toggle_button = _joy_msg->buttons[6];
@@ -121,7 +121,7 @@ void Chic_m4k::send_receive_serial()
         {
             int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
-            printf("write_size : %d\n", write_size);
+            //printf("write_size : %d\n", write_size);
 
         }
 
@@ -129,7 +129,7 @@ void Chic_m4k::send_receive_serial()
 
         int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
 
-        printf("read_size : %d\n", read_size);
+        //printf("read_size : %d\n", read_size);
         // for (int i = 0; i < read_size; i++)
         //     printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
 
@@ -216,7 +216,7 @@ void Chic_m4k::receive_encoder()
   
                             //std::memcpy(&LEncoder, &encoder_protocol[2], sizeof(int));
                             //std::memcpy(&REncoder, &encoder_protocol[6], sizeof(int));
-                            printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
+                            //printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
                             count_revolution();
                             break;
                       }
@@ -233,7 +233,7 @@ void Chic_m4k::receive_encoder()
 
 void Chic_m4k::count_revolution()
 {
-    if (prev_LEncoder != -1)
+    if (prev_LEncoder == -1)
         prev_LEncoder = LEncoder;
 
     int dL_Enc = LEncoder - prev_LEncoder;
@@ -245,7 +245,9 @@ void Chic_m4k::count_revolution()
             dL_Enc += max_encoder_output;
     }
 
-    if (prev_REncoder != -1)
+    Lencoder_change += dL_Enc;
+
+    if (prev_REncoder == -1)
         prev_REncoder = REncoder;
 
     int dR_Enc = REncoder - prev_REncoder;
@@ -256,62 +258,71 @@ void Chic_m4k::count_revolution()
         else
             dR_Enc += max_encoder_output;
     }
+    dR_Enc *= -1;
+    Rencoder_change += dR_Enc;
 
-    // if (prev_LEncoder != -1)
-    // {
+    prev_LEncoder = LEncoder;
+    prev_REncoder = REncoder;
 
-    //     int dL_Enc = LEncoder - prev_LEncoder;
-    //     if (abs(dL_Enc) > max_encoder_value_change)
-    //     {
-    //         if (dL_Enc > 0)
-    //             dL_Enc -= max_encoder_output;
-    //         else
-    //             dL_Enc += max_encoder_output;
-    //         Lencoder_change += dL_Enc;
-    //     }
-    //     else
-    //     {
-    //         Lencoder_change += dL_Enc;
-    //     }
-    // }
-    // else
-    // {
-    //     prev_LEncoder = LEncoder;
-    // }
+    int difference_Lencoder = Lencoder_change - temp_Lencoder_change;
+    int difference_Rencoder = Rencoder_change - temp_Rencoder_change;
 
-    // if (prev_REncoder != -1)
-    // {
+    temp_Lencoder_change = Lencoder_change;
+    temp_Rencoder_change = Rencoder_change;
 
-    //     int dR_Enc = REncoder - prev_REncoder;
-    //     if (abs(dR_Enc) > max_encoder_value_change)
-    //     {
-    //         if (dR_Enc > 0)
-    //             dR_Enc -= max_encoder_output;
-    //         else
-    //             dR_Enc += max_encoder_output;
-    //         Rencoder_change += dR_Enc;
-    //     }
-    //     else
-    //     {
-    //         Rencoder_change += dR_Enc;
-    //     }
-    // }
-    // else
-    // {
-    //     prev_REncoder = REncoder;
-    // }
+    //printf("dL_Enc : %d , dR_Enc : %d difference_Lencoder : %d difference_Rencoder : %d\n", dL_Enc, dR_Enc,difference_Lencoder,difference_Rencoder);
 
-    // if (Lencoder_change > encoder_per_wheel)
-    //     LeftEncoder++;
-    // else if (Lencoder_change < -encoder_per_wheel)
-    //     LeftEncoder--;
+    odom_generator(difference_Lencoder,difference_Rencoder);
+}
 
-    // if (Rencoder_change > encoder_per_wheel)
-    //     RightEncoder++;
-    // else if (Rencoder_change < -encoder_per_wheel)
-    //     RightEncoder--;
+void Chic_m4k::odom_generator(int& difference_Lencoder,int& difference_Rencoder)
+{
+    counter2dist = (wheelsize * (double)3.141592) / (double)encoder_per_wheel;
 
-    // printf("LeftEncoder : %d , RightEncoder : %d ",LeftEncoder,RightEncoder);
+    dist_R = difference_Lencoder * counter2dist;
+    dist_L = difference_Rencoder * counter2dist;
+
+   // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
+    //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
+
+    double gap_radian = (dist_R - dist_L) / wheelbase;
+    double gap_dist = (dist_R + dist_L) / 2.0;
+    double gap_x = cos(gap_radian) * gap_dist;
+    double gap_y = sin(gap_radian) * gap_dist;
+    double gap_th = gap_radian / (double)3.141592 * 180.0;
+
+    add_motion(gap_x,gap_y,gap_th);
+}
+
+void Chic_m4k::add_motion(double& x,double& y,double& th)
+{
+    _th = _th + th;
+    double base_radian_th = angle2radian * _th;
+
+    _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
+    _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
+    
+
+    angleRearange();
+    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n",_x,_y,_th);
+}
+
+void Chic_m4k::angleRearange()
+{
+    while (1)
+    {
+        if (_th > 180.0)
+        {
+            _th -= 360.0;
+            continue;
+        }
+        if (_th <= -180.0)
+        {
+            _th += 360.0;
+            continue;
+        }
+        break;
+    }
 }
 
 unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
