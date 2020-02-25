@@ -58,11 +58,11 @@ bool Chic_m4k::serial_connect()
 
     memset( &termi, 0, sizeof(termi) );
 
-    termi.c_cflag = B115200; 
-    termi.c_cflag |= CS8;    
-    termi.c_cflag |= CLOCAL; 
-    termi.c_cflag |= CREAD;  
-    termi.c_iflag = 0;       
+    termi.c_cflag = B115200;
+    termi.c_cflag |= CS8;
+    termi.c_cflag |= CLOCAL;
+    termi.c_cflag |= CREAD;
+    termi.c_iflag = 0;
     termi.c_oflag = 0;
     termi.c_lflag = 0;
     termi.c_cc[VTIME] = 0;
@@ -72,36 +72,6 @@ bool Chic_m4k::serial_connect()
     tcsetattr(serial_port, TCSANOW, &termi);
 
     printf("Robot connection\n");
-}
-
-void Chic_m4k::send_serial()
-{
-    memset(send_serial_protocol, 0, send_serial_protocol_size);
-    send_serial_protocol[0] = 0xFF;
-    send_serial_protocol[1] = 0x07;
-    send_serial_protocol[2] = 0x04;
-    send_serial_protocol[3] = 0x05;
-
-    send_serial_protocol[4] = (unsigned char)Linear_velocity;
-    send_serial_protocol[5] = (unsigned char)angular_velocity;
-    send_serial_protocol[6] = CalcChecksum(send_serial_protocol, send_serial_protocol_size);
-
-    if (serial_port > 0)
-    {
-        int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
-
-        printf("write_size : %d\n", write_size);
-    }
-}
-
-void Chic_m4k::receive_serial()
-{
-    memset(receive_serial_protocol, 0, recv_serial_protocol_size);
-
-    int read_size = read(serial_port, receive_serial_protocol, 7);
-
-    for (int i = 0; i < read_size; i++)
-        printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
 }
 
 void Chic_m4k::send_receive_serial()
@@ -122,7 +92,6 @@ void Chic_m4k::send_receive_serial()
             int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
             //printf("write_size : %d\n", write_size);
-
         }
 
         memset(receive_serial_protocol, 0, recv_serial_protocol_size);
@@ -138,6 +107,7 @@ void Chic_m4k::send_receive_serial()
 
 void Chic_m4k::set_val(float Linear_velocity, float angular_velocity)
 {
+    encoder_mtx.lock();
     memset(send_serial_protocol, 0, send_serial_protocol_size);
     send_serial_protocol[0] = 0xFF;
     send_serial_protocol[1] = 0x07;
@@ -151,25 +121,12 @@ void Chic_m4k::set_val(float Linear_velocity, float angular_velocity)
     if (serial_port > 0)
     {
         int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
-
-        printf("write_size : %d\n", write_size);
     }
 
     memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
     int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
-    if (read_size > 0)
-    {
-        printf("read_size : %d\n", read_size);
-        for (int i = 0; i < read_size; i++)
-            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
-    }
-    while(true)
-    {
-        int encoder_read_size = read(serial_port, encoder_protocol, encoder_protocol_size);
-        for (int i = 0; i < encoder_read_size; i++)
-            printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
-    }
+    encoder_mtx.unlock();
 }
 
 void Chic_m4k::get_val()
@@ -190,33 +147,26 @@ void Chic_m4k::receive_encoder()
       {
           if(start[0] == 0xFF)
           {
-              //printf("get start 1byte  ");
               int read_data_length = read(serial_port, length, 1);
               if(read_data_length == 1)
               {
                   if(length[0] == 0x0D)
                   {
-                      //printf("get datalength 1byte  :");
                       int data_size = read(serial_port, encoder_protocol, 11);
                       if(data_size == 11)
                       {
-                            //for (int i = 0; i < data_size; i++)
-                            //    printf("encoder_protocol[%d] : %u\n", i, encoder_protocol[i]);
                             int s1 = encoder_protocol[2] & 0xFF;
                             int s2 = encoder_protocol[3] & 0xFF;
                             int s3 = encoder_protocol[4] & 0xFF;
                             int s4 = encoder_protocol[5] & 0xFF;
                             LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-                            
+
                             s1 = encoder_protocol[6] & 0xFF;
                             s2 = encoder_protocol[7] & 0xFF;
                             s3 = encoder_protocol[8] & 0xFF;
                             s4 = encoder_protocol[9] & 0xFF;
                             REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-  
-                            //std::memcpy(&LEncoder, &encoder_protocol[2], sizeof(int));
-                            //std::memcpy(&REncoder, &encoder_protocol[6], sizeof(int));
-                            //printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
+
                             count_revolution();
                             break;
                       }
@@ -270,8 +220,6 @@ void Chic_m4k::count_revolution()
     temp_Lencoder_change = Lencoder_change;
     temp_Rencoder_change = Rencoder_change;
 
-    //printf("dL_Enc : %d , dR_Enc : %d difference_Lencoder : %d difference_Rencoder : %d\n", dL_Enc, dR_Enc,difference_Lencoder,difference_Rencoder);
-
     odom_generator(difference_Lencoder,difference_Rencoder);
 }
 
@@ -302,7 +250,6 @@ void Chic_m4k::add_motion(double& x,double& y,double& th)
     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
     
-
     angleRearange();
     printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n",_x,_y,_th);
 }

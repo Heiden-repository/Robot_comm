@@ -19,7 +19,7 @@
 #define gear_ratio 6.2
 #define velocity_zero 127
 #define max_encoder_output 4096
-#define max_encoder_value_change 2000
+#define max_encoder_value_change 200
 #define PI = 3.141592
 
 class Chic_m4k
@@ -38,7 +38,7 @@ private:
     unsigned int LEncoder, REncoder;
     int prev_LEncoder, prev_REncoder;
 
-    float encoder_per_wheel;
+    int encoder_per_wheel;
     int Lencoder_change,Rencoder_change;
     int temp_Lencoder_change,temp_Rencoder_change;
     double wheelsize,wheelbase;
@@ -65,7 +65,6 @@ private:
     //Subscriber
     ros::Subscriber joy_msg_sub_;
 
-    std::thread send_receive_thread;
     std::mutex encoder_mtx;
 
     void initValue(void);
@@ -73,8 +72,6 @@ private:
     void initPublisher(void);
 
     bool serial_connect(void);
-    void send_serial(void);
-    void receive_serial(void);
     void send_receive_serial(void);
     void receive_encoder(void);
     void count_revolution(void);
@@ -96,7 +93,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
     prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0)
     {
         initValue();
