@@ -195,7 +195,7 @@ void Chic_m4k::count_revolution()
             dL_Enc += max_encoder_output;
     }
 
-    Lencoder_change += dL_Enc;
+    Lencoder_change += (dL_Enc / 10);
 
     if (prev_REncoder == -1)
         prev_REncoder = REncoder;
@@ -209,7 +209,9 @@ void Chic_m4k::count_revolution()
             dR_Enc += max_encoder_output;
     }
     dR_Enc *= -1;
-    Rencoder_change += dR_Enc;
+    Rencoder_change += (dR_Enc / 10);
+
+    printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
 
     prev_LEncoder = LEncoder;
     prev_REncoder = REncoder;
@@ -285,7 +287,7 @@ unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
 
 void Chic_m4k::runLoop()
 {
-    ros::Rate r(50);
+    ros::Rate r(100);
 
     while (ros::ok())
     {

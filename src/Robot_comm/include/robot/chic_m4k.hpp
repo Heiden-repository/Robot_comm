@@ -19,7 +19,7 @@
 #define gear_ratio 6.2
 #define velocity_zero 127
 #define max_encoder_output 4096
-#define max_encoder_value_change 200
+#define max_encoder_value_change 2000
 #define PI = 3.141592
 
 class Chic_m4k
