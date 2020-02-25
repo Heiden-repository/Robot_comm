@@ -58,11 +58,11 @@ bool Chic_m4k::serial_connect()
 
     memset( &termi, 0, sizeof(termi) );
 
-    termi.c_cflag = B115200; 
-    termi.c_cflag |= CS8;    
-    termi.c_cflag |= CLOCAL; 
-    termi.c_cflag |= CREAD;  
-    termi.c_iflag = 0;       
+    termi.c_cflag = B115200;
+    termi.c_cflag |= CS8;
+    termi.c_cflag |= CLOCAL;
+    termi.c_cflag |= CREAD;
+    termi.c_iflag = 0;
     termi.c_oflag = 0;
     termi.c_lflag = 0;
     termi.c_cc[VTIME] = 0;
@@ -122,7 +122,6 @@ void Chic_m4k::send_receive_serial()
             int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
             //printf("write_size : %d\n", write_size);
-
         }
 
         memset(receive_serial_protocol, 0, recv_serial_protocol_size);
@@ -207,16 +206,16 @@ void Chic_m4k::receive_encoder()
                             int s3 = encoder_protocol[4] & 0xFF;
                             int s4 = encoder_protocol[5] & 0xFF;
                             LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-                            
+
                             s1 = encoder_protocol[6] & 0xFF;
                             s2 = encoder_protocol[7] & 0xFF;
                             s3 = encoder_protocol[8] & 0xFF;
                             s4 = encoder_protocol[9] & 0xFF;
                             REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-  
+
                             //std::memcpy(&LEncoder, &encoder_protocol[2], sizeof(int));
                             //std::memcpy(&REncoder, &encoder_protocol[6], sizeof(int));
-                            //printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
+                            printf("Lencoder: %u    Rencoder: %u   \n", LEncoder, REncoder);
                             count_revolution();
                             break;
                       }
@@ -245,7 +244,7 @@ void Chic_m4k::count_revolution()
             dL_Enc += max_encoder_output;
     }
 
-    Lencoder_change += dL_Enc;
+    Lencoder_change += (dL_Enc / 10);
 
     if (prev_REncoder == -1)
         prev_REncoder = REncoder;
@@ -259,7 +258,9 @@ void Chic_m4k::count_revolution()
             dR_Enc += max_encoder_output;
     }
     dR_Enc *= -1;
-    Rencoder_change += dR_Enc;
+    Rencoder_change += (dR_Enc / 10);
+
+    printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
 
     prev_LEncoder = LEncoder;
     prev_REncoder = REncoder;
@@ -270,7 +271,7 @@ void Chic_m4k::count_revolution()
     temp_Lencoder_change = Lencoder_change;
     temp_Rencoder_change = Rencoder_change;
 
-    //printf("dL_Enc : %d , dR_Enc : %d difference_Lencoder : %d difference_Rencoder : %d\n", dL_Enc, dR_Enc,difference_Lencoder,difference_Rencoder);
+    printf("dL_Enc : %d , dR_Enc : %d difference_Lencoder : %d difference_Rencoder : %d\n", dL_Enc, dR_Enc,difference_Lencoder,difference_Rencoder);
 
     odom_generator(difference_Lencoder,difference_Rencoder);
 }
@@ -302,7 +303,6 @@ void Chic_m4k::add_motion(double& x,double& y,double& th)
     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
     
-
     angleRearange();
     printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n",_x,_y,_th);
 }
@@ -338,7 +338,7 @@ unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
 
 void Chic_m4k::runLoop()
 {
-    ros::Rate r(50);
+    ros::Rate r(100);
 
     while (ros::ok())
     {

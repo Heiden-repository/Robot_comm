@@ -38,7 +38,7 @@ private:
     unsigned int LEncoder, REncoder;
     int prev_LEncoder, prev_REncoder;
 
-    float encoder_per_wheel;
+    int encoder_per_wheel;
     int Lencoder_change,Rencoder_change;
     int temp_Lencoder_change,temp_Rencoder_change;
     double wheelsize,wheelbase;
@@ -96,7 +96,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),
+    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
     prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0)
     {
         initValue();
