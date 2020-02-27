@@ -8,11 +8,12 @@ void Chic_m4k::initValue()
 void Chic_m4k::initSubscriber(ros::NodeHandle &nh_)
 {
     joy_msg_sub_ = nh_.subscribe("/joy", 10, &Chic_m4k::joy_msg_callback, this);
+    twist_msg_sub_ = nh_.subscribe("/cmd_vel",10,&Chic_m4k::twist_msg_callback,this);
 }
 
-void Chic_m4k::initPublisher()
+void Chic_m4k::initPublisher(ros::NodeHandle &nh_)
 {
-
+    odom_pub_ = nh_.advertise<nav_msgs::Odometry>("/odometry",10);
 }
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
@@ -21,6 +22,13 @@ void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
     linear = _joy_msg->axes[1];
 
     toggle_button = _joy_msg->buttons[6];
+    convert_cmd_vel();
+}
+
+void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg)
+{
+    linear = _twist_msg->linear.x;
+    angular = _twist_msg->angular.z;
     convert_cmd_vel();
 }
 
@@ -285,6 +293,31 @@ unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
     return ~csum;
 }
 
+nav_msgs::Odometry Chic_m4k::odom_arrange()
+{
+    nav_msgs::Odometry odom;
+    odom.header.frame_id = "odom";
+    odom.header.stamp.sec = ros::Time::now().sec;
+    odom.header.stamp.nsec = ros::Time::now().nsec;
+    odom.child_frame_id = "base_link";
+
+    odom.pose.pose.position.x = _x;
+    odom.pose.pose.position.y = _y;
+    odom.pose.pose.position.z = 0.0;
+
+    double radian = _th / 180.0 * 3.141592;
+    boost::array<double,36> covariance = {0.0,};
+
+    odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(radian);
+    odom.twist.twist.linear.x = Linear_velocity;
+    odom.twist.twist.angular.z = angular_velocity;
+
+    odom.pose.covariance = covariance;
+    odom.twist.covariance = odom.pose.covariance;
+
+    return odom;
+}
+
 void Chic_m4k::runLoop()
 {
     ros::Rate r(100);
@@ -293,7 +326,14 @@ void Chic_m4k::runLoop()
     {
         send_receive_serial();
         receive_encoder();
-
+        nav_msgs::Odometry odom = odom_arrange();
+        duration_publisher++;
+        if(duration_publisher == 10)
+        {
+            odom_pub_.publish(odom);
+           duration_publisher = 0;
+        }
+            
         tcflush(serial_port, TCIFLUSH);
 
         r.sleep();

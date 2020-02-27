@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 
 #include <thread>
 #include <mutex>
@@ -8,6 +10,8 @@
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
+
+#include "tf/transform_broadcaster.h"
 
 #define JOY_BUTTON_AMOUNT 12
 #define JOY_AXES_AMOUNT 6
@@ -38,6 +42,8 @@ private:
     unsigned int LEncoder, REncoder;
     int prev_LEncoder, prev_REncoder;
 
+    int duration_publisher;
+
     int encoder_per_wheel;
     int Lencoder_change,Rencoder_change;
     int temp_Lencoder_change,temp_Rencoder_change;
@@ -60,16 +66,17 @@ private:
     unsigned char encoder_protocol[encoder_protocol_size];
 
     //Publisher
-    ros::Publisher serial_pub_;
+    ros::Publisher odom_pub_;
 
     //Subscriber
     ros::Subscriber joy_msg_sub_;
+    ros::Subscriber twist_msg_sub_;
 
     std::mutex encoder_mtx;
 
     void initValue(void);
     void initSubscriber(ros::NodeHandle& nh_);
-    void initPublisher(void);
+    void initPublisher(ros::NodeHandle &nh_);
 
     bool serial_connect(void);
     void send_receive_serial(void);
@@ -82,9 +89,12 @@ private:
     void get_val();
     void angleRearange();
 
+    nav_msgs::Odometry odom_arrange();
+
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
+    void twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg);
     void convert_cmd_vel();
     
 public:
@@ -94,10 +104,11 @@ public:
 
     Chic_m4k(ros::NodeHandle &_nh):
     nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
-    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0)
+    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0)
     {
         initValue();
         initSubscriber(nh_);
+        initPublisher(nh_);
         serial_connect();
 
         //set_val(255.0f,0.0f);
