@@ -11,7 +11,7 @@
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
 
-#include "tf/transform_broadcaster.h"
+#include <tf/transform_broadcaster.h>
 
 #define JOY_BUTTON_AMOUNT 12
 #define JOY_AXES_AMOUNT 6
@@ -45,17 +45,20 @@ private:
     int duration_publisher;
 
     int encoder_per_wheel;
-    int Lencoder_change,Rencoder_change;
-    int temp_Lencoder_change,temp_Rencoder_change;
-    double wheelsize,wheelbase;
-    double dist_R,dist_L;
-    
-    double _x,_y,_th;
-    
+    int Lencoder_change, Rencoder_change;
+    int temp_Lencoder_change, temp_Rencoder_change;
+    double wheelsize, wheelbase;
+    double dist_R, dist_L;
+
+    double _x, _y, _th;
+
     bool toggle_button;
 
     double counter2dist;
     double angle2radian = 3.141592 / 180.0;
+
+    ros::Time current_time, last_time;
+    tf::TransformBroadcaster odom_broadcaster;
 
     //buffer
     unsigned char dataBuffer[buffer_size];
@@ -89,7 +92,7 @@ private:
     void get_val();
     void angleRearange();
 
-    nav_msgs::Odometry odom_arrange();
+    void odom_arrange(tf::TransformBroadcaster& odom_broadcaster);
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
@@ -104,14 +107,12 @@ public:
 
     Chic_m4k(ros::NodeHandle &_nh):
     nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
-    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0)
+    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
     {
         initValue();
         initSubscriber(nh_);
         initPublisher(nh_);
         serial_connect();
-
-        //set_val(255.0f,0.0f);
     }
 
     ~Chic_m4k()

@@ -13,7 +13,8 @@ void Chic_m4k::initSubscriber(ros::NodeHandle &nh_)
 
 void Chic_m4k::initPublisher(ros::NodeHandle &nh_)
 {
-    odom_pub_ = nh_.advertise<nav_msgs::Odometry>("/odometry",10);
+    odom_pub_ = nh_.advertise<nav_msgs::Odometry>("/odom", 10);
+
 }
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
@@ -139,7 +140,6 @@ void Chic_m4k::set_val(float Linear_velocity, float angular_velocity)
 
 void Chic_m4k::get_val()
 {
-
 }
 
 void Chic_m4k::receive_encoder()
@@ -150,19 +150,19 @@ void Chic_m4k::receive_encoder()
 
     while (ros::ok())
     {
-      int read_start = read(serial_port, start, 1);  
-      if(read_start == 1)
-      {
-          if(start[0] == 0xFF)
-          {
-              int read_data_length = read(serial_port, length, 1);
-              if(read_data_length == 1)
-              {
-                  if(length[0] == 0x0D)
-                  {
-                      int data_size = read(serial_port, encoder_protocol, 11);
-                      if(data_size == 11)
-                      {
+        int read_start = read(serial_port, start, 1);
+        if (read_start == 1)
+        {
+            if (start[0] == 0xFF)
+            {
+                int read_data_length = read(serial_port, length, 1);
+                if (read_data_length == 1)
+                {
+                    if (length[0] == 0x0D)
+                    {
+                        int data_size = read(serial_port, encoder_protocol, 11);
+                        if (data_size == 11)
+                        {
                             int s1 = encoder_protocol[2] & 0xFF;
                             int s2 = encoder_protocol[3] & 0xFF;
                             int s3 = encoder_protocol[4] & 0xFF;
@@ -177,15 +177,15 @@ void Chic_m4k::receive_encoder()
 
                             count_revolution();
                             break;
-                      }
-                  }
-                  else
-                  {
-                      break;
-                  }
-              }
-          }
-      }
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -230,17 +230,17 @@ void Chic_m4k::count_revolution()
     temp_Lencoder_change = Lencoder_change;
     temp_Rencoder_change = Rencoder_change;
 
-    odom_generator(difference_Lencoder,difference_Rencoder);
+    odom_generator(difference_Lencoder, difference_Rencoder);
 }
 
-void Chic_m4k::odom_generator(int& difference_Lencoder,int& difference_Rencoder)
+void Chic_m4k::odom_generator(int &difference_Lencoder, int &difference_Rencoder)
 {
     counter2dist = (wheelsize * (double)3.141592) / (double)encoder_per_wheel;
 
     dist_R = difference_Lencoder * counter2dist;
     dist_L = difference_Rencoder * counter2dist;
 
-   // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
+    // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
 
     double gap_radian = (dist_R - dist_L) / wheelbase;
@@ -249,19 +249,19 @@ void Chic_m4k::odom_generator(int& difference_Lencoder,int& difference_Rencoder)
     double gap_y = sin(gap_radian) * gap_dist;
     double gap_th = gap_radian / (double)3.141592 * 180.0;
 
-    add_motion(gap_x,gap_y,gap_th);
+    add_motion(gap_x, gap_y, gap_th);
 }
 
-void Chic_m4k::add_motion(double& x,double& y,double& th)
+void Chic_m4k::add_motion(double &x, double &y, double &th)
 {
     _th = _th + th;
+    angleRearange();
     double base_radian_th = angle2radian * _th;
 
     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
-    
-    angleRearange();
-    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n",_x,_y,_th);
+
+    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
 }
 
 void Chic_m4k::angleRearange()
@@ -287,59 +287,73 @@ unsigned char Chic_m4k::CalcChecksum(unsigned char *data, int leng)
     unsigned char csum;
 
     csum = 0xFF;
-    for(;leng>0; leng--)
+    for (; leng > 0; leng--)
         csum += *data++;
 
     return ~csum;
 }
 
-nav_msgs::Odometry Chic_m4k::odom_arrange()
+void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 {
-    nav_msgs::Odometry odom;
-    odom.header.frame_id = "odom";
-    odom.header.stamp.sec = ros::Time::now().sec;
-    odom.header.stamp.nsec = ros::Time::now().nsec;
-    odom.child_frame_id = "base_link";
+    current_time = ros::Time::now();
 
+    geometry_msgs::TransformStamped odom_trans;
+    double radian = _th / 180.0 * 3.141592;
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(radian);
+    odom_trans.header.stamp = current_time;
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "base_link";
+
+    odom_trans.transform.translation.x = _x;
+    odom_trans.transform.translation.y = _y;
+    odom_trans.transform.translation.z = 0.0;
+    odom_trans.transform.rotation = odom_quat;
+
+    //send the transform
+    odom_broadcaster.sendTransform(odom_trans);
+
+    //next, we'll publish the odometry message over ROS
+    nav_msgs::Odometry odom;
+    odom.header.stamp = current_time;
+    odom.header.frame_id = "odom";
+
+    //set the position
     odom.pose.pose.position.x = _x;
     odom.pose.pose.position.y = _y;
     odom.pose.pose.position.z = 0.0;
+    odom.pose.pose.orientation = odom_quat;
 
-    double radian = _th / 180.0 * 3.141592;
-    boost::array<double,36> covariance = {0.0,};
-
-    odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(radian);
+    //set the velocity
+    odom.child_frame_id = "base_link";
     odom.twist.twist.linear.x = Linear_velocity;
+    odom.twist.twist.linear.y = 0;
     odom.twist.twist.angular.z = angular_velocity;
-
-    odom.pose.covariance = covariance;
-    odom.twist.covariance = odom.pose.covariance;
-
-    return odom;
+    last_time = current_time;
+    odom_pub_.publish(odom);
 }
 
 void Chic_m4k::runLoop()
 {
-    ros::Rate r(100);
+    ros::Rate r(140);
 
     while (ros::ok())
     {
+        ros::spinOnce();
+        current_time = ros::Time::now();
+
         send_receive_serial();
         receive_encoder();
-        nav_msgs::Odometry odom = odom_arrange();
+
         duration_publisher++;
-        if(duration_publisher == 10)
+        if (duration_publisher == 14)
         {
-            odom_pub_.publish(odom);
-           duration_publisher = 0;
+            odom_arrange(odom_broadcaster);
+
+            duration_publisher = 0;
         }
-            
+
         tcflush(serial_port, TCIFLUSH);
 
         r.sleep();
-
-        ros::spinOnce();
     };
 }
-
-
