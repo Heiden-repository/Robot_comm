@@ -1,6 +1,8 @@
 <launch>
     <node name="joy" pkg="joy" type="joy_node" />
-    <node name="chic_m4k" pkg="Robot_comm" type="CHIC_M4K" />
+    <node name="chic_m4k" pkg="Robot_comm" type="CHIC_M4K" >
+        <param name="port" type="string" value="/dev/food_bot"/>
+    </node>
     <node name="rviz" pkg="rviz" type="rviz" />
     <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 100" />
 </launch>
