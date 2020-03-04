@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>Robot_comm</name>
+  <name>robot_comm</name>
   <version>0.0.0</version>
-  <description>The Robot_comm package</description>
+  <description>The robot_comm package</description>
 
   <maintainer email="koacoy@cogaplex.com">heeseok</maintainer>
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(Robot_comm)
+project(robot_comm)
 
 add_compile_options(-std=c++11)
 
