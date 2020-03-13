@@ -19,21 +19,22 @@ void Chic_m4k::initPublisher(ros::NodeHandle &nh_)
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)
 {
-    angular = _joy_msg->axes[0]*-1;
+    angular = _joy_msg->axes[0];
     linear = _joy_msg->axes[1];
 
     toggle_button = _joy_msg->buttons[6];
-    convert_cmd_vel();
+    joy_convert_cmd_vel();
 }
 
 void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg)
 {
     linear = _twist_msg->linear.x;
     angular = _twist_msg->angular.z;
-    convert_cmd_vel();
+    twist_convert_cmd_vel();
+    set_val(Linear_velocity,angular_velocity);
 }
 
-void Chic_m4k::convert_cmd_vel()
+void Chic_m4k::joy_convert_cmd_vel()
 {
     if(toggle_button)
     {
@@ -45,6 +46,12 @@ void Chic_m4k::convert_cmd_vel()
         Linear_velocity = 127;
         angular_velocity = 127;
     }
+}
+
+void Chic_m4k::twist_convert_cmd_vel()
+{
+    Linear_velocity = (linear + 2) * 63.5;
+    angular_velocity = (angular + 2) * 63.5;
 }
 
 bool Chic_m4k::serial_connect()
@@ -219,7 +226,7 @@ void Chic_m4k::count_revolution()
     dR_Enc *= -1;
     Rencoder_change += (dR_Enc / 10);
 
-    printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
+    //printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
 
     prev_LEncoder = LEncoder;
     prev_REncoder = REncoder;
@@ -247,7 +254,7 @@ void Chic_m4k::odom_generator(int &difference_Lencoder, int &difference_Rencoder
     double gap_dist = (dist_R + dist_L) / 2.0;
     double gap_x = cos(gap_radian) * gap_dist;
     double gap_y = sin(gap_radian) * gap_dist;
-    double gap_th = gap_radian / (double)3.141592 * 180.0;
+    double gap_th = gap_radian / (double)3.141592 * 180.0 * (-1);
 
     add_motion(gap_x, gap_y, gap_th);
 }
@@ -261,7 +268,7 @@ void Chic_m4k::add_motion(double &x, double &y, double &th)
     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
 
-    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
+    //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
 }
 
 void Chic_m4k::angleRearange()
@@ -348,7 +355,7 @@ void Chic_m4k::runLoop()
         if (duration_publisher == 14)
         {
             odom_arrange(odom_broadcaster);
-
+            //printf("odom_arrange");
             duration_publisher = 0;
         }
 

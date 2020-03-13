@@ -98,7 +98,8 @@ private:
 
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
     void twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg);
-    void convert_cmd_vel();
+    void joy_convert_cmd_vel();
+    void twist_convert_cmd_vel();
     
 public:
     int LeftEncoder, RightEncoder;
