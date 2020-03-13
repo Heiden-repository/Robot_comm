@@ -48,10 +48,10 @@ void Chic_m4k::joy_convert_cmd_vel()
     }
 }
 
-void Chic_m4k::twist_convert_cmd_vel(float &linear, float &angular)
+void Chic_m4k::twist_convert_cmd_vel(float& linear, float& angular)
 {
-    Linear_velocity = linear * 60 / PI / wheelsize;
-    angular_velocity = angular * 60 / PI / wheelsize;
+    Linear_velocity = (linear * 60 / PI / wheelsize*2)+127;
+    angular_velocity = (angular * 60 / PI / wheelsize*2)+127;
 }
 
 bool Chic_m4k::serial_connect()
@@ -342,20 +342,23 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 void Chic_m4k::runLoop()
 {
     ros::Rate r(140);
-
+    printf("start runLoop\n");
     while (ros::ok())
     {
+        printf("here1\n");
         ros::spinOnce();
         current_time = ros::Time::now();
+        printf("here2\n");
 
         send_receive_serial();
         receive_encoder();
+        printf("here3\n");
 
         duration_publisher++;
         if (duration_publisher == 14)
         {
             odom_arrange(odom_broadcaster);
-            //printf("odom_arrange");
+            printf("odom_arrange");
             duration_publisher = 0;
         }
 

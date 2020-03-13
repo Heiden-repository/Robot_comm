@@ -118,6 +118,7 @@ public:
         initSubscriber(nh_);
         initPublisher(nh_);
         serial_connect();
+        printf("serial_connect\n");
     }
 
     ~Chic_m4k()
