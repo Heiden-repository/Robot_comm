@@ -59,7 +59,7 @@ private:
     bool toggle_button;
 
     double counter2dist;
-    double angle2radian = 3.141592 / 180.0;
+    double angle2radian = PI / 180.0;
 
     ros::Time current_time, last_time;
     tf::TransformBroadcaster odom_broadcaster;

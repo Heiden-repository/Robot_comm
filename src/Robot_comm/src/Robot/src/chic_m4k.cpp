@@ -242,7 +242,7 @@ void Chic_m4k::count_revolution()
 
 void Chic_m4k::odom_generator(int &difference_Lencoder, int &difference_Rencoder)
 {
-    counter2dist = (wheelsize * (double)3.141592) / (double)encoder_per_wheel;
+    counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
 
     dist_R = difference_Lencoder * counter2dist;
     dist_L = difference_Rencoder * counter2dist;
@@ -254,7 +254,7 @@ void Chic_m4k::odom_generator(int &difference_Lencoder, int &difference_Rencoder
     double gap_dist = (dist_R + dist_L) / 2.0;
     double gap_x = cos(gap_radian) * gap_dist;
     double gap_y = sin(gap_radian) * gap_dist;
-    double gap_th = gap_radian / (double)3.141592 * 180.0 * (-1);
+    double gap_th = gap_radian / PI * 180.0 * (-1);
 
     add_motion(gap_x, gap_y, gap_th);
 }
@@ -305,7 +305,7 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     current_time = ros::Time::now();
 
     geometry_msgs::TransformStamped odom_trans;
-    double radian = _th / 180.0 * 3.141592;
+    double radian = _th / 180.0 * PI;
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(radian);
     odom_trans.header.stamp = current_time;
     odom_trans.header.frame_id = "odom";
