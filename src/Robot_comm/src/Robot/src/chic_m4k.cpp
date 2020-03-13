@@ -14,7 +14,6 @@ void Chic_m4k::initSubscriber(ros::NodeHandle &nh_)
 void Chic_m4k::initPublisher(ros::NodeHandle &nh_)
 {
     odom_pub_ = nh_.advertise<nav_msgs::Odometry>("/odom", 10);
-
 }
 
 void Chic_m4k::joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg)

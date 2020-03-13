@@ -103,11 +103,11 @@ private:
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
     void twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg);
     void joy_convert_cmd_vel();
-    void twist_convert_cmd_vel(float& linear,float& angular);
+    void twist_convert_cmd_vel(float& linear, float& angular);
     
 public:
     int LeftEncoder, RightEncoder;
-
+ 
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
