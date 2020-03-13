@@ -30,7 +30,7 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 {
     linear = _twist_msg->linear.x;
     angular = _twist_msg->angular.z;
-    twist_convert_cmd_vel();
+    twist_convert_cmd_vel(linear,angular);
     set_val(Linear_velocity,angular_velocity);
 }
 
@@ -38,8 +38,8 @@ void Chic_m4k::joy_convert_cmd_vel()
 {
     if(toggle_button)
     {
-        Linear_velocity = (linear + 1)*127;
-        angular_velocity = (angular + 1)*127;
+        Linear_velocity = (linear + 1) * 127;
+        angular_velocity = (angular + 1) * 127;
     }
     else
     {
@@ -48,18 +48,18 @@ void Chic_m4k::joy_convert_cmd_vel()
     }
 }
 
-void Chic_m4k::twist_convert_cmd_vel()
+void Chic_m4k::twist_convert_cmd_vel(float &linear, float &angular)
 {
-    Linear_velocity = (linear + 2) * 63.5;
-    angular_velocity = (angular + 2) * 63.5;
+    Linear_velocity = linear * 60 / PI / wheelsize;
+    angular_velocity = angular * 60 / PI / wheelsize;
 }
 
 bool Chic_m4k::serial_connect()
 {
     serial_port = 0;
 
-	while(ros::ok())
-	{
+    while (ros::ok())
+    {
 		serial_port = open( "/dev/ttyUSB0", O_RDWR | O_NOCTTY );
 		if(serial_port<0)
 		{

@@ -24,7 +24,12 @@
 #define velocity_zero 127
 #define max_encoder_output 4096
 #define max_encoder_value_change 2000
-#define PI = 3.141592
+#define PI 3.141592
+
+#define max_vel_x 0.5
+#define min_vel_x 0.1
+#define wheelsize 0.19
+#define wheelbase 0.51
 
 class Chic_m4k
 {
@@ -47,7 +52,6 @@ private:
     int encoder_per_wheel;
     int Lencoder_change, Rencoder_change;
     int temp_Lencoder_change, temp_Rencoder_change;
-    double wheelsize, wheelbase;
     double dist_R, dist_L;
 
     double _x, _y, _th;
@@ -99,7 +103,7 @@ private:
     void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
     void twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg);
     void joy_convert_cmd_vel();
-    void twist_convert_cmd_vel();
+    void twist_convert_cmd_vel(float& linear,float& angular);
     
 public:
     int LeftEncoder, RightEncoder;
@@ -108,7 +112,7 @@ public:
 
     Chic_m4k(ros::NodeHandle &_nh):
     nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
-    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),wheelsize(0.19),wheelbase(0.51),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
+    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
     {
         initValue();
         initSubscriber(nh_);
