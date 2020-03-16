@@ -47,10 +47,10 @@ void Chic_m4k::joy_convert_cmd_vel()
     }
 }
 
-void Chic_m4k::twist_convert_cmd_vel(float& linear, float& angular)
+void Chic_m4k::twist_convert_cmd_vel(float &linear, float &angular)
 {
-    Linear_velocity = (linear * 60 / PI / wheelsize*2)+127;
-    angular_velocity = (angular * 60 / PI / wheelsize*2)+127;
+    Linear_velocity = (linear * 60 / PI / wheelsize * 2) + 127;
+    angular_velocity = (angular / 60 * 2 * PI *2 ) +127;
 }
 
 bool Chic_m4k::serial_connect()
@@ -239,7 +239,7 @@ void Chic_m4k::count_revolution()
     odom_generator(difference_Lencoder, difference_Rencoder);
 }
 
-void Chic_m4k::odom_generator(int &difference_Lencoder, int &difference_Rencoder)
+void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
 
