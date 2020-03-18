@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <opencv2/opencv.hpp>
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
@@ -31,6 +32,9 @@
 #define wheelsize 0.19
 #define wheelbase 0.51
 
+#define covar_const_right 1
+#define covar_const_left 1
+
 class Chic_m4k
 {
 private:
@@ -55,12 +59,15 @@ private:
     double dist_R, dist_L;
 
     double _x, _y, _th;
+    cv::Mat _covar = cv::Mat::zeros(3,3,CV_32F);
 
     bool toggle_button;
 
     double counter2dist;
     double angle2radian = PI / 180.0;
 
+    //double _covariance[36];
+    boost::array<double,36UL> _covariance;
     ros::Time current_time, last_time;
     tf::TransformBroadcaster odom_broadcaster;
 
@@ -90,13 +97,13 @@ private:
     void receive_encoder(void);
     void count_revolution(void);
     void odom_generator(int& difference_Lencoder,int& difference_Rencoder);
-    void add_motion(double& gap_x,double& gap_y,double& gap_th);
 
     void set_val(float Linear_velocity,float angular_velocity);
     void get_val();
     void angleRearange();
 
     void odom_arrange(tf::TransformBroadcaster& odom_broadcaster);
+    void make_covariance(double& gap_x, double& gap_y, double& gap_dist);
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 

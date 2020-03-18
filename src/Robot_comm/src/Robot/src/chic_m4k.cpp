@@ -239,6 +239,25 @@ void Chic_m4k::count_revolution()
     odom_generator(difference_Lencoder, difference_Rencoder);
 }
 
+// void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
+// {
+//     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
+
+//     dist_R = difference_Lencoder * counter2dist;
+//     dist_L = difference_Rencoder * counter2dist;
+
+//     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
+//     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
+
+//     double gap_radian = (dist_R - dist_L) / wheelbase;
+//     double gap_dist = (dist_R + dist_L) / 2.0;
+//     double gap_x = cos(gap_radian) * gap_dist;
+//     double gap_y = sin(gap_radian) * gap_dist;
+//     double gap_th = gap_radian / PI * 180.0 * (-1);
+
+//     add_motion(gap_x, gap_y, gap_th);
+// }
+
 void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
@@ -251,37 +270,76 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 
     double gap_radian = (dist_R - dist_L) / wheelbase;
     double gap_dist = (dist_R + dist_L) / 2.0;
-    double gap_x = cos(gap_radian) * gap_dist;
-    double gap_y = sin(gap_radian) * gap_dist;
-    double gap_th = gap_radian / PI * 180.0 * (-1);
 
-    add_motion(gap_x, gap_y, gap_th);
+    _th = gap_radian / 2 + _th;
+    angleRearange();
+
+    double gap_x = cos(_th) * gap_dist;
+    double gap_y = sin(_th) * gap_dist;
+
+    make_covariance(gap_x,gap_y,gap_dist);
+    _x += gap_x;
+    _y += gap_y;
+
+    //double degree_th = _th / PI * 180.0 * (-1);
+    //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, degree_th);
 }
 
-void Chic_m4k::add_motion(double &x, double &y, double &th)
+// void Chic_m4k::add_motion(double &x, double &y, double &th)
+// {
+//     _th = _th + th;
+//     angleRearange();
+//     double base_radian_th = angle2radian * _th;
+
+//     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
+//     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
+
+//     //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
+//}
+
+void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist)
 {
-    _th = _th + th;
-    angleRearange();
-    double base_radian_th = angle2radian * _th;
+    cv::Mat error_pos = cv::Mat::eye(3, 3, CV_32F);
+    error_pos.at<double>(0, 2) = -1 * gap_y;
+    error_pos.at<double>(1, 2) = gap_x;
 
-    _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
-    _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
+    cv::Mat error_motion(3, 2, CV_32F);
+    error_motion.at<double>(0, 0) = cos(_th)/2 - gap_dist/wheelbase/2*sin(_th);
+    error_motion.at<double>(0, 1) =  cos(_th)/2 + gap_dist/wheelbase/2*sin(_th);
+    error_motion.at<double>(1, 0) =  sin(_th)/2 + gap_dist/wheelbase/2*cos(_th);
+    error_motion.at<double>(1, 1) =  sin(_th)/2 - gap_dist/wheelbase/2*cos(_th);
+    error_motion.at<double>(2, 0) = 1/wheelbase;
+    error_motion.at<double>(2, 1) = -1/wheelbase;
 
-    //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
+    cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_32F);
+    covar_for_count.at<double>(0,0) = covar_const_right * abs(dist_R);
+    covar_for_count.at<double>(1,1) = covar_const_left * abs(dist_L);
+
+    _covar = error_pos * _covar * error_pos + error_motion * covar_for_count * error_motion.t();
+
+    _covariance[0] = _covar.at<double>(0,0);
+    _covariance[1] = _covar.at<double>(0,1);
+    _covariance[5] = _covar.at<double>(0,2);
+    _covariance[6] = _covar.at<double>(1,0);
+    _covariance[7] = _covar.at<double>(1,1);
+    _covariance[11] = _covar.at<double>(1,2);
+    _covariance[30] = _covar.at<double>(2,0);
+    _covariance[31] = _covar.at<double>(2,1);
+    _covariance[35] = _covar.at<double>(2,2);
 }
 
 void Chic_m4k::angleRearange()
 {
     while (1)
     {
-        if (_th > 180.0)
+        if (_th > PI)
         {
-            _th -= 360.0;
+            _th -= 2*PI;
             continue;
         }
-        if (_th <= -180.0)
+        if (_th <= -PI)
         {
-            _th += 360.0;
+            _th += 2*PI;
             continue;
         }
         break;
@@ -328,12 +386,14 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     odom.pose.pose.position.y = _y;
     odom.pose.pose.position.z = 0.0;
     odom.pose.pose.orientation = odom_quat;
+    odom.pose.covariance = _covariance;
 
     //set the velocity
     odom.child_frame_id = "base_link";
     odom.twist.twist.linear.x = Linear_velocity;
     odom.twist.twist.linear.y = 0;
     odom.twist.twist.angular.z = angular_velocity;
+    odom.twist.covariance = _covariance;
     last_time = current_time;
     odom_pub_.publish(odom);
 }

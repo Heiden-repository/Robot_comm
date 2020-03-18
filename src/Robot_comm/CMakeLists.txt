@@ -8,7 +8,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   tf
+  cv_bridge
 )
+
+find_package(OpenCV REQUIRED)
 
 ## Generate messages in the 'msg' folder
 # add_message_files(
