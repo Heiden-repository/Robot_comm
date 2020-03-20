@@ -103,7 +103,7 @@ private:
     void angleRearange();
 
     void odom_arrange(tf::TransformBroadcaster& odom_broadcaster);
-    void make_covariance(double& gap_x, double& gap_y, double& gap_dist);
+    void make_covariance(double& gap_x, double& gap_y, double& gap_dist, double& for_covarian_radian);
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
