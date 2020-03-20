@@ -299,19 +299,19 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
-    cv::Mat error_pos = cv::Mat::eye(3, 3, CV_32F);
+    cv::Mat error_pos = cv::Mat::eye(3, 3, CV_64F);
     error_pos.at<double>(0, 2) = -1 * gap_y;
     error_pos.at<double>(1, 2) = gap_x;
 
-    cv::Mat error_motion(2, 3, CV_32F);
-    error_motion.at<double>(0, 0) = cos(_th)/2 - gap_dist/wheelbase/2*sin(_th);
-    error_motion.at<double>(0, 1) =  cos(_th)/2 + gap_dist/wheelbase/2*sin(_th);
-    error_motion.at<double>(1, 0) =  sin(_th)/2 + gap_dist/wheelbase/2*cos(_th);
-    error_motion.at<double>(1, 1) =  sin(_th)/2 - gap_dist/wheelbase/2*cos(_th);
+    cv::Mat error_motion(3, 2, CV_64F);
+    error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2 - gap_dist/wheelbase/2*sin(for_covarian_radian);
+    error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2 + gap_dist/wheelbase/2*sin(for_covarian_radian);
+    error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2 + gap_dist/wheelbase/2*cos(for_covarian_radian);
+    error_motion.at<double>(1, 1) =  sin(for_covarian_radian)/2 - gap_dist/wheelbase/2*cos(for_covarian_radian);
     error_motion.at<double>(2, 0) = 1/wheelbase;
     error_motion.at<double>(2, 1) = -1/wheelbase;
 
-    cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_32F);
+    cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_64F);
     covar_for_count.at<double>(0,0) = covar_const_right * abs(dist_R);
     covar_for_count.at<double>(1,1) = covar_const_left * abs(dist_L);
 
