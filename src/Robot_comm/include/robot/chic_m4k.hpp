@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
-#include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 
@@ -35,6 +34,8 @@
 #define covar_const_right 1
 #define covar_const_left 1
 
+#define radpersec_to_RPM 9.54929659
+
 class Chic_m4k
 {
 private:
@@ -42,11 +43,11 @@ private:
     int serial_port;
     std::string topic_name;
 
-    float Linear_velocity;
-    float angular_velocity;
+    float Linear_serial;
+    float angular_serial;
 
-    float linear;
-    float angular;
+    float twist_linear;
+    float twist_angular;
 
     unsigned int LEncoder, REncoder;
     int prev_LEncoder, prev_REncoder;
@@ -60,8 +61,6 @@ private:
 
     double _x, _y, _th;
     cv::Mat _covar = cv::Mat::zeros(3,3,CV_32F);
-
-    bool toggle_button;
 
     double counter2dist;
     double angle2radian = PI / 180.0;
@@ -83,7 +82,6 @@ private:
     ros::Publisher odom_pub_;
 
     //Subscriber
-    ros::Subscriber joy_msg_sub_;
     ros::Subscriber twist_msg_sub_;
 
     std::mutex encoder_mtx;
@@ -98,7 +96,6 @@ private:
     void count_revolution(void);
     void odom_generator(int& difference_Lencoder,int& difference_Rencoder);
 
-    void set_val(float Linear_velocity,float angular_velocity);
     void get_val();
     void angleRearange();
 
@@ -107,10 +104,8 @@ private:
 
     unsigned char CalcChecksum(unsigned char* data, int leng);
 
-    void joy_msg_callback(const sensor_msgs::Joy::ConstPtr &_joy_msg);
     void twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg);
-    void joy_convert_cmd_vel();
-    void twist_convert_cmd_vel(float& linear, float& angular);
+    void twist_convert_cmd_vel(float& Linear_serial, float& angular_serial);
     
 public:
     int LeftEncoder, RightEncoder;
@@ -118,14 +113,13 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),toggle_button(0),linear(0),angular(0),Linear_velocity(velocity_zero),angular_velocity(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
+    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
     prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
     {
         initValue();
         initSubscriber(nh_);
         initPublisher(nh_);
         serial_connect();
-        printf("serial_connect\n");
     }
 
     ~Chic_m4k()
