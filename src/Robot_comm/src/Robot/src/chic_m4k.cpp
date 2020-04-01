@@ -15,7 +15,6 @@ void Chic_m4k::initPublisher(ros::NodeHandle &nh_)
     odom_pub_ = nh_.advertise<nav_msgs::Odometry>("/odom", 10);
 }
 
-
 void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_msg)
 {
     twist_linear = _twist_msg->linear.x;
@@ -25,8 +24,8 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
 {
-    Linear_serial = (twist_linear * 60 / PI / wheelsize * 2 / 3 ) + 127;
-    angular_serial = (twist_angular * radpersec_to_RPM * 2 / 3) + 127;
+    Linear_serial = (twist_linear * 60.0f / PI / wheelsize * 2.0f / 3.0f ) * 1.3f + 127.0f;
+    angular_serial = -(twist_angular * radpersec_to_RPM * 10 *2.0f / 3.0f) + 127.0f;
 }
 
 bool Chic_m4k::serial_connect()
@@ -82,7 +81,7 @@ void Chic_m4k::send_receive_serial()
         {
             int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
-            //printf("write_size : %d\n", write_size);
+//            printf("write_size : %d\n", write_size);
         }
 
         memset(receive_serial_protocol, 0, recv_serial_protocol_size);
@@ -102,54 +101,61 @@ void Chic_m4k::get_val()
 
 void Chic_m4k::receive_encoder()
 {
-    unsigned char start[1];
-    unsigned char length[1];
-    memset(encoder_protocol, 0, encoder_protocol_size);
 
-    while (ros::ok())
+    int receive_data = -1;
+    int buf_end = 0;
+    unsigned char buf[256];
+    unsigned char temp_buf[256];
+    receive_data = read(serial_port, temp_buf, 256);
+    
+    memcpy(&buf[buf_end], temp_buf, receive_data);
+    buf_end += receive_data;
+
+    for (int i = 0; i < buf_end; i++)
     {
-        int read_start = read(serial_port, start, 1);
-        if (read_start == 1)
-        {
-            if (start[0] == 0xFF)
-            {
-                int read_data_length = read(serial_port, length, 1);
-                if (read_data_length == 1)
-                {
-                    if (length[0] == 0x0D)
+        if (i + 13 > buf_end)
+            break;
+
+        if (buf[i] == 0xFF)
+            if (buf[i + 1] == 0x0D)
+                if (buf[i + 2] == 0x03)
+                    if (buf[i + 3] == 0x05)
                     {
-                        int data_size = read(serial_port, encoder_protocol, 11);
-                        if (data_size == 11)
+
+                        int s1 = buf[i + 4] & 0xFF;
+                        int s2 = buf[i + 5] & 0xFF;
+                        int s3 = buf[i + 6] & 0xFF;
+                        int s4 = buf[i + 7] & 0xFF;
+                        LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+                        s1 = buf[i + 8] & 0xFF;
+                        s2 = buf[i + 9] & 0xFF;
+                        s3 = buf[i + 10] & 0xFF;
+                        s4 = buf[i + 11] & 0xFF;
+                        REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+                        int remain_size = buf_end - i - 13;
+                        //printf("LEncoder : %5d REncoder : %5d\n", LEncoder, REncoder);
+                        count_revolution();
+                        if (remain_size != 0)
                         {
-                            int s1 = encoder_protocol[2] & 0xFF;
-                            int s2 = encoder_protocol[3] & 0xFF;
-                            int s3 = encoder_protocol[4] & 0xFF;
-                            int s4 = encoder_protocol[5] & 0xFF;
-                            LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-
-                            s1 = encoder_protocol[6] & 0xFF;
-                            s2 = encoder_protocol[7] & 0xFF;
-                            s3 = encoder_protocol[8] & 0xFF;
-                            s4 = encoder_protocol[9] & 0xFF;
-                            REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-
-                            count_revolution();
+                            memcpy(temp_buf, buf, 256);
+                            memcpy(buf, &temp_buf[i + 13], remain_size);
+                            i = -1;
+                            buf_end = remain_size;
+                        }
+                        else
+                        {
+                            buf_end = 0;
                             break;
                         }
                     }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
     }
 }
 
 void Chic_m4k::count_revolution()
 {
-    if (prev_LEncoder == -1)
+    if (prev_LEncoder == max_encoder_output+1)
         prev_LEncoder = LEncoder;
 
     int dL_Enc = LEncoder - prev_LEncoder;
@@ -160,12 +166,12 @@ void Chic_m4k::count_revolution()
         else
             dL_Enc += max_encoder_output;
     }
+    //Lencoder_change += (dL_Enc / 10);
 
-    Lencoder_change += (dL_Enc / 10);
 
-    if (prev_REncoder == -1)
+    if (prev_REncoder == max_encoder_output+1)
         prev_REncoder = REncoder;
-
+    
     int dR_Enc = REncoder - prev_REncoder;
     if (abs(dR_Enc) > max_encoder_value_change)
     {
@@ -174,85 +180,100 @@ void Chic_m4k::count_revolution()
         else
             dR_Enc += max_encoder_output;
     }
-    dR_Enc *= -1;
-    Rencoder_change += (dR_Enc / 10);
+    dR_Enc = -dR_Enc;
+
+    //Rencoder_change += (dR_Enc / 10);
 
     //printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
+    //printf("%5d %5d %5d %5d\n", dL_Enc, dR_Enc, LEncoder, REncoder);
+    odom_generator(dL_Enc, dR_Enc);
 
     prev_LEncoder = LEncoder;
     prev_REncoder = REncoder;
 
-    int difference_Lencoder = Lencoder_change - temp_Lencoder_change;
-    int difference_Rencoder = Rencoder_change - temp_Rencoder_change;
+    return;
 
-    temp_Lencoder_change = Lencoder_change;
-    temp_Rencoder_change = Rencoder_change;
+    // int difference_Lencoder = Lencoder_change - temp_Lencoder_change;
+    // int difference_Rencoder = Rencoder_change - temp_Rencoder_change;
 
-    odom_generator(difference_Lencoder, difference_Rencoder);
+    // temp_Lencoder_change = Lencoder_change;
+    // temp_Rencoder_change = Rencoder_change;
+
+    // odom_generator(difference_Lencoder, difference_Rencoder);
+}
+
+void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
+{
+    counter2dist = (wheelsize * CV_PI) / (double)encoder_per_wheel;
+
+    double difference_Lencoder_double = difference_Lencoder;
+    double difference_Rencoder_double = difference_Rencoder;
+
+    dist_L = difference_Lencoder_double * counter2dist;
+    dist_R = difference_Rencoder_double * counter2dist;
+
+    // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d\n", difference_Lencoder, difference_Rencoder);
+    // printf("dist_R : %10lf dist_L : %10lf\n",dist_L, dist_R);
+
+    double gap_radian = (dist_R - dist_L) / wheelbase;
+    double gap_dist = (dist_R + dist_L) / 2.0;
+    double gap_x = cos(gap_radian) * gap_dist;
+    double gap_y = sin(gap_radian) * gap_dist;
+
+    // printf("%5d %5d. %10.6lf %10.6lf %10.6lf\n", 
+    //     difference_Lencoder, difference_Rencoder,
+    //     gap_x, gap_y, gap_radian);
+
+    add_motion(gap_x, gap_y, gap_radian);
 }
 
 // void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 // {
 //     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
 
-//     dist_R = difference_Lencoder * counter2dist;
-//     dist_L = difference_Rencoder * counter2dist;
+//     double difference_Lencoder_double = difference_Lencoder;
+//     double difference_Rencoder_double = difference_Rencoder;
 
-//     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
-//     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
+//     dist_L = difference_Lencoder_double * counter2dist;
+//     dist_R = difference_Rencoder_double * counter2dist;
 
-//     double gap_radian = (dist_R - dist_L) / wheelbase;
+//     //printf("difference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
+//     //printf("dist_R : %3.2lf dist_L : %3.2lf\n",dist_R, dist_L);
+
+//     double gap_radian = -(dist_R - dist_L) / wheelbase;
 //     double gap_dist = (dist_R + dist_L) / 2.0;
-//     double gap_x = cos(gap_radian) * gap_dist;
-//     double gap_y = sin(gap_radian) * gap_dist;
-//     double gap_th = gap_radian / PI * 180.0 * (-1);
+//     double for_covarian_radian = gap_radian / 2.0 + _th;
+//     _th = gap_radian + _th;
+//     angleRearange();
 
-//     add_motion(gap_x, gap_y, gap_th);
+//     double gap_x = cos(for_covarian_radian) * gap_dist;
+//     double gap_y = sin(for_covarian_radian) * gap_dist;
+
+//     make_covariance(gap_x, gap_y, gap_dist, for_covarian_radian);
+//     _x += gap_x;
+//     _y += gap_y;
+
+//     //double degree_th = _th / PI * 180.0;
+//     printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
 // }
 
-void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
+void Chic_m4k::add_motion(double &x, double &y, double &th)
 {
-    counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
+    _th = _th + th;
 
-    dist_R = difference_Lencoder * counter2dist;
-    dist_L = difference_Rencoder * counter2dist;
-
-    // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
-    //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
-
-    double gap_radian = (dist_R - dist_L) / wheelbase;
-    double gap_dist = (dist_R + dist_L) / 2.0;
-    double for_covarian_radian = gap_radian / 2 + _th;
-    _th = gap_radian + _th;
     angleRearange();
+ //   double base_radian_th = angle2radian * _th;
 
-    double gap_x = cos(for_covarian_radian) * gap_dist;
-    double gap_y = sin(for_covarian_radian) * gap_dist;
+    _x = _x + x * cos(_th) - y * sin(_th);
+    _y = _y + x * sin(_th) + y * cos(_th);
 
-    make_covariance(gap_x,gap_y,gap_dist,for_covarian_radian);
-    _x += gap_x;
-    _y += gap_y;
-
-    //double degree_th = _th / PI * 180.0 * (-1);
-    //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, degree_th);
+    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th/CV_PI*180.0);
 }
-
-// void Chic_m4k::add_motion(double &x, double &y, double &th)
-// {
-//     _th = _th + th;
-//     angleRearange();
-//     double base_radian_th = angle2radian * _th;
-
-//     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
-//     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
-
-//     //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
-//}
 
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
     cv::Mat error_pos = cv::Mat::eye(3, 3, CV_64F);
-    error_pos.at<double>(0, 2) = -1 * gap_y;
+    error_pos.at<double>(0, 2) = gap_y;
     error_pos.at<double>(1, 2) = gap_x;
 
     cv::Mat error_motion(3, 2, CV_64F);
@@ -278,7 +299,7 @@ void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, do
     _covariance[30] = _covar.at<double>(2,0);
     _covariance[31] = _covar.at<double>(2,1);
     _covariance[35] = _covar.at<double>(2,2);
-    printf("covariance");
+//    printf("covariance");
 }
 
 void Chic_m4k::angleRearange()
@@ -290,7 +311,7 @@ void Chic_m4k::angleRearange()
             _th -= 2*PI;
             continue;
         }
-        if (_th <= -PI)
+        if (_th < -PI)
         {
             _th += 2*PI;
             continue;
@@ -315,8 +336,7 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     current_time = ros::Time::now();
 
     geometry_msgs::TransformStamped odom_trans;
-    double radian = _th / 180.0 * PI;
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(radian);
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(_th);
     odom_trans.header.stamp = current_time;
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "base_link";
@@ -334,6 +354,9 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     odom.header.stamp = current_time;
     odom.header.frame_id = "odom";
 
+    // tf::poseTFToMsg(tf::Transform(tf::createQuaternionFromYaw(_th), tf::Vector3(_x,_y, 0)), 
+    // odom.pose.pose);
+
     //set the position
     odom.pose.pose.position.x = _x;
     odom.pose.pose.position.y = _y;
@@ -343,9 +366,9 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 
     //set the velocity
     odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = Linear_serial;
+    odom.twist.twist.linear.x = twist_linear;
     odom.twist.twist.linear.y = 0;
-    odom.twist.twist.angular.z = angular_serial;
+    odom.twist.twist.angular.z = twist_angular;
     odom.twist.covariance = _covariance;
     last_time = current_time;
     odom_pub_.publish(odom);

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robot_comm)
 
-add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
+#  set(CMAKE_VERBOSE_MAKEFILE yes)
+#  set(CMAKE_BUILD_TYPE Debug)
+#  set(CMAKE_CXX_FLAGS "-O0 -DNDEBUG -std=c++11")
+
 
 find_package(catkin REQUIRED COMPONENTS
   message_generation
@@ -11,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
 )
 
-find_package(OpenCV REQUIRED)
+#find_package(OpenCV REQUIRED)
 
 ## Generate messages in the 'msg' folder
 # add_message_files(
