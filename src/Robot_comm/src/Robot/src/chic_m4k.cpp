@@ -214,8 +214,8 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 {
     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
 
-    dist_R = difference_Lencoder * counter2dist;
-    dist_L = difference_Rencoder * counter2dist;
+    dist_L = difference_Lencoder * counter2dist;
+    dist_R = difference_Rencoder * counter2dist;
 
     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
@@ -343,9 +343,9 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 
     //set the velocity
     odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = Linear_serial;
+    odom.twist.twist.linear.x = twist_linear;
     odom.twist.twist.linear.y = 0;
-    odom.twist.twist.angular.z = angular_serial;
+    odom.twist.twist.angular.z = twist_angular;
     odom.twist.covariance = _covariance;
     last_time = current_time;
     odom_pub_.publish(odom);
