@@ -20,6 +20,7 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 {
     twist_linear = _twist_msg->linear.x;
     twist_angular = _twist_msg->angular.z;
+
     twist_convert_cmd_vel(twist_linear,twist_angular);
 }
 
@@ -160,9 +161,10 @@ void Chic_m4k::count_revolution()
         else
             dL_Enc += max_encoder_output;
     }
+    dL_Enc *= -1;
 
     Lencoder_change += (dL_Enc / 10);
-
+    
     if (prev_REncoder == -1)
         prev_REncoder = REncoder;
 
@@ -174,7 +176,7 @@ void Chic_m4k::count_revolution()
         else
             dR_Enc += max_encoder_output;
     }
-    dR_Enc *= -1;
+
     Rencoder_change += (dR_Enc / 10);
 
     //printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
@@ -220,7 +222,7 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
 
-    double gap_radian = (dist_R - dist_L) / wheelbase;
+    double gap_radian = -(dist_R - dist_L) / wheelbase;
     double gap_dist = (dist_R + dist_L) / 2.0;
     double for_covarian_radian = gap_radian / 2 + _th;
     _th = gap_radian + _th;
@@ -255,7 +257,7 @@ void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, do
     error_pos.at<double>(0, 2) = -1 * gap_y;
     error_pos.at<double>(1, 2) = gap_x;
 
-    cv::Mat error_motion(3, 2, CV_64F);
+    cv::Mat error_motion = cv::Mat::zeros(3, 2, CV_64F);
     error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2 - gap_dist/wheelbase/2*sin(for_covarian_radian);
     error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2 + gap_dist/wheelbase/2*sin(for_covarian_radian);
     error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2 + gap_dist/wheelbase/2*cos(for_covarian_radian);
@@ -285,12 +287,12 @@ void Chic_m4k::angleRearange()
 {
     while (1)
     {
-        if (_th > PI)
+        if (_th > 2*PI)
         {
             _th -= 2*PI;
             continue;
         }
-        if (_th <= -PI)
+        if (_th < 0)
         {
             _th += 2*PI;
             continue;
@@ -315,8 +317,7 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     current_time = ros::Time::now();
 
     geometry_msgs::TransformStamped odom_trans;
-    double radian = _th / 180.0 * PI;
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(radian);
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(_th);
     odom_trans.header.stamp = current_time;
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "base_link";
@@ -334,6 +335,9 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
     odom.header.stamp = current_time;
     odom.header.frame_id = "odom";
 
+    //  tf::poseTFToMsg(tf::Transform(tf::createQuaternionFromYaw(radian), tf::Vector3(_x,_y, 0)), 
+    // odom.pose.pose); //Aria returns pose in mm.
+
     //set the position
     odom.pose.pose.position.x = _x;
     odom.pose.pose.position.y = _y;
@@ -343,9 +347,9 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 
     //set the velocity
     odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = Linear_serial;
+    odom.twist.twist.linear.x = twist_linear;
     odom.twist.twist.linear.y = 0;
-    odom.twist.twist.angular.z = angular_serial;
+    odom.twist.twist.angular.z = twist_angular;
     odom.twist.covariance = _covariance;
     last_time = current_time;
     odom_pub_.publish(odom);

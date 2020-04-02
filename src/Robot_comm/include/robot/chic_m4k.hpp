@@ -36,6 +36,9 @@
 
 #define radpersec_to_RPM 9.54929659
 
+#define DEG2RAD(x) ((x)*M_PI/180.)
+#define RAD2DEG(x) ((x)/M_PI*180.)
+
 class Chic_m4k
 {
 private:
@@ -60,7 +63,7 @@ private:
     double dist_R, dist_L;
 
     double _x, _y, _th;
-    cv::Mat _covar = cv::Mat::zeros(3,3,CV_32F);
+    cv::Mat _covar = cv::Mat::zeros(3,3,CV_64F);
 
     double counter2dist;
     double angle2radian = PI / 180.0;
@@ -113,7 +116,7 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),
+    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),_th(0.0),_x(0.0), _y(0.0),twist_angular(0.0),twist_linear(0.0),
     prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
     {
         initValue();
