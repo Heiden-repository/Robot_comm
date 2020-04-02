@@ -216,8 +216,8 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 {
     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
 
-    dist_R = difference_Lencoder * counter2dist;
-    dist_L = difference_Rencoder * counter2dist;
+    dist_L = difference_Lencoder * counter2dist;
+    dist_R = difference_Rencoder * counter2dist;
 
     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
