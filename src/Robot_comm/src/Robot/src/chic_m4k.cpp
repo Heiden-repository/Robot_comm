@@ -60,7 +60,7 @@ bool Chic_m4k::serial_connect()
 
     tcflush(serial_port, TCIFLUSH);
     tcsetattr(serial_port, TCSANOW, &termi);
-
+    ros::Time::now().nsec
     printf("Robot connection\n");
 }
 
@@ -382,13 +382,13 @@ void Chic_m4k::runLoop()
         ros::spinOnce();
         current_time = ros::Time::now();
 
-        send_receive_serial();
         receive_encoder();
 
         duration_publisher++;
         if (duration_publisher == 14)
         {
             odom_arrange(odom_broadcaster);
+            send_receive_serial();
 
             duration_publisher = 0;
         }
