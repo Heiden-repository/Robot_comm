@@ -276,12 +276,12 @@ void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, do
     error_pos.at<double>(1, 2) = gap_x;
 
     cv::Mat error_motion(3, 2, CV_64F);
-    error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2 - gap_dist/wheelbase/2*sin(for_covarian_radian);
-    error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2 + gap_dist/wheelbase/2*sin(for_covarian_radian);
-    error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2 + gap_dist/wheelbase/2*cos(for_covarian_radian);
-    error_motion.at<double>(1, 1) =  sin(for_covarian_radian)/2 - gap_dist/wheelbase/2*cos(for_covarian_radian);
-    error_motion.at<double>(2, 0) = 1/wheelbase;
-    error_motion.at<double>(2, 1) = -1/wheelbase;
+    error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2 - gap_dist/wheelbase/2.0*sin(for_covarian_radian);
+    error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2 + gap_dist/wheelbase/2.0*sin(for_covarian_radian);
+    error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2 + gap_dist/wheelbase/2.0*cos(for_covarian_radian);
+    error_motion.at<double>(1, 1) =  sin(for_covarian_radian)/2 - gap_dist/wheelbase/2.0*cos(for_covarian_radian);
+    error_motion.at<double>(2, 0) = 1.0/wheelbase;
+    error_motion.at<double>(2, 1) = -1.0/wheelbase;
 
     cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_64F);
     covar_for_count.at<double>(0,0) = covar_const_right * fabs(dist_R);
@@ -307,12 +307,12 @@ void Chic_m4k::angleRearange()
     {
         if (_th > CV_PI)
         {
-            _th -= 2*CV_PI;
+            _th -= 2.0*CV_PI;
             continue;
         }
         if (_th < -CV_PI)
         {
-            _th += 2*CV_PI;
+            _th += 2.0*CV_PI;
             continue;
         }
         break;
