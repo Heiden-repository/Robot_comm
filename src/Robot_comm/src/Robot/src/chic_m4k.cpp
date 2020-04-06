@@ -228,7 +228,7 @@ void Chic_m4k::count_revolution()
 
 void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
-    counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
+    counter2dist = (wheelsize * CV_PI) / (double)encoder_per_wheel;
 
     double difference_Lencoder_double = difference_Lencoder;
     double difference_Rencoder_double = difference_Rencoder;
