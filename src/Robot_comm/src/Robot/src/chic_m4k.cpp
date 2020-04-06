@@ -26,7 +26,7 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
 {
-    Linear_serial = (twist_linear * 60 / PI / wheelsize * 2 ) + 127;
+    Linear_serial = (twist_linear * 60 / CV_PI / wheelsize * 2 ) + 127;
     angular_serial = (twist_angular * radpersec_to_RPM * 2 ) + 127;
 }
 
@@ -190,7 +190,7 @@ void Chic_m4k::count_revolution()
 
 void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
-    counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
+    counter2dist = (wheelsize * CV_PI) / (double)encoder_per_wheel;
 
     dist_L = difference_Lencoder * counter2dist;
     dist_R = difference_Rencoder * counter2dist;
@@ -252,14 +252,14 @@ void Chic_m4k::angleRearange()
 {
     while (1)
     {
-        if (_th > 2*PI)
+        if (_th > CV_PI)
         {
-            _th -= 2*PI;
+            _th -= 2*CV_PI;
             continue;
         }
-        if (_th < 0)
+        if (_th < -CV_PI)
         {
-            _th += 2*PI;
+            _th += 2*CV_PI;
             continue;
         }
         break;

@@ -24,7 +24,6 @@
 #define velocity_zero 127
 #define max_encoder_output 4096
 #define max_encoder_value_change 2000
-#define PI 3.141592
 
 #define max_vel_x 0.5
 #define min_vel_x 0.1
@@ -66,7 +65,7 @@ private:
     cv::Mat _covar = cv::Mat::zeros(3,3,CV_64F);
 
     double counter2dist;
-    double angle2radian = PI / 180.0;
+    double angle2radian = CV_PI / 180.0;
 
     //double _covariance[36];
     boost::array<double,36UL> _covariance;
