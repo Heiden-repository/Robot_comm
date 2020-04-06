@@ -24,7 +24,7 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
 {
-    Linear_serial = (twist_linear * 60.0f / PI / wheelsize * 2.0f / 3.0f ) * 1.3f + 127.0f;
+    Linear_serial = (twist_linear * 60.0f / CV_PI / wheelsize * 2.0f / 3.0f ) * 1.3f + 127.0f;
     angular_serial = -(twist_angular * radpersec_to_RPM * 10 *2.0f / 3.0f) + 127.0f;
 }
 
@@ -305,14 +305,14 @@ void Chic_m4k::angleRearange()
 {
     while (1)
     {
-        if (_th > PI)
+        if (_th > CV_PI)
         {
-            _th -= 2*PI;
+            _th -= 2*CV_PI;
             continue;
         }
-        if (_th < -PI)
+        if (_th < -CV_PI)
         {
-            _th += 2*PI;
+            _th += 2*CV_PI;
             continue;
         }
         break;
