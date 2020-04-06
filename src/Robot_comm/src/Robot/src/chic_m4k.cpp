@@ -26,8 +26,8 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
 {
-    Linear_serial = (twist_linear * 60 / CV_PI / wheelsize * 2 ) + 127;
-    angular_serial = (twist_angular * radpersec_to_RPM * 2 ) + 127;
+    Linear_serial = (twist_linear * 60.0f / CV_PI / wheelsize * 2.0f ) + 127.0f;
+    angular_serial = (twist_angular * radpersec_to_RPM * 2.0f ) + 127.0f;
 }
 
 bool Chic_m4k::serial_connect()
@@ -144,7 +144,7 @@ void Chic_m4k::receive_encoder()
 
 void Chic_m4k::count_revolution()
 {
-    if (prev_LEncoder == -1)
+    if (prev_LEncoder == max_encoder_output+1)
         prev_LEncoder = LEncoder;
 
     int dL_Enc = LEncoder - prev_LEncoder;
@@ -155,11 +155,10 @@ void Chic_m4k::count_revolution()
         else
             dL_Enc += max_encoder_output;
     }
-    dL_Enc *= -1;
 
-    Lencoder_change += (dL_Enc / 10);
+    Lencoder_change += (dL_Enc / 10.0f);
     
-    if (prev_REncoder == -1)
+    if (prev_REncoder == max_encoder_output+1)
         prev_REncoder = REncoder;
 
     int dR_Enc = REncoder - prev_REncoder;
@@ -170,8 +169,8 @@ void Chic_m4k::count_revolution()
         else
             dR_Enc += max_encoder_output;
     }
-
-    Rencoder_change += (dR_Enc / 10);
+    dR_Enc = -dR_Enc;
+    Rencoder_change += (dR_Enc / 10.0f);
 
     //printf("Lencoder_change: %d    Rencoder_change: %d   \n", Lencoder_change, Rencoder_change);
 
@@ -200,7 +199,7 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 
     double gap_radian = -(dist_R - dist_L) / wheelbase;
     double gap_dist = (dist_R + dist_L) / 2.0;
-    double for_covarian_radian = gap_radian / 2 + _th;
+    double for_covarian_radian = gap_radian / 2.0 + _th;
     _th = gap_radian + _th;
     angleRearange();
 
@@ -219,16 +218,16 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
     cv::Mat error_pos = cv::Mat::eye(3, 3, CV_64F);
-    error_pos.at<double>(0, 2) = -1 * gap_y;
+    error_pos.at<double>(0, 2) = -1.0 * gap_y;
     error_pos.at<double>(1, 2) = gap_x;
 
     cv::Mat error_motion = cv::Mat::zeros(3, 2, CV_64F);
-    error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2 - gap_dist/wheelbase/2*sin(for_covarian_radian);
-    error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2 + gap_dist/wheelbase/2*sin(for_covarian_radian);
-    error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2 + gap_dist/wheelbase/2*cos(for_covarian_radian);
-    error_motion.at<double>(1, 1) =  sin(for_covarian_radian)/2 - gap_dist/wheelbase/2*cos(for_covarian_radian);
-    error_motion.at<double>(2, 0) = 1/wheelbase;
-    error_motion.at<double>(2, 1) = -1/wheelbase;
+    error_motion.at<double>(0, 0) = cos(for_covarian_radian)/2.0 - gap_dist/wheelbase/2.0*sin(for_covarian_radian);
+    error_motion.at<double>(0, 1) =  cos(for_covarian_radian)/2.0 + gap_dist/wheelbase/2.0*sin(for_covarian_radian);
+    error_motion.at<double>(1, 0) =  sin(for_covarian_radian)/2.0 + gap_dist/wheelbase/2.0*cos(for_covarian_radian);
+    error_motion.at<double>(1, 1) =  sin(for_covarian_radian)/2.0 - gap_dist/wheelbase/2.0*cos(for_covarian_radian);
+    error_motion.at<double>(2, 0) = 1.0/wheelbase;
+    error_motion.at<double>(2, 1) = -1.0/wheelbase;
 
     cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_64F);
     covar_for_count.at<double>(0,0) = covar_const_right * fabs(dist_R);

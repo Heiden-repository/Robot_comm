@@ -112,8 +112,8 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio/10),_th(0.0),_x(0.0), _y(0.0),twist_angular(0.0),twist_linear(0.0),
-    prev_LEncoder(-1),prev_REncoder(-1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
+    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),_x(0.0),_y(0.0),_th(0.0),REncoder(0),LEncoder(0),_covariance({0,}),
+    prev_LEncoder(max_encoder_output+1),prev_REncoder(max_encoder_output+1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
     {
         initValue();
         initSubscriber(nh_);
