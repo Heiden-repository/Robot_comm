@@ -26,8 +26,8 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
 {
-    Linear_serial = (twist_linear * 60 / PI / wheelsize * 2 / 3 ) + 127;
-    angular_serial = (twist_angular * radpersec_to_RPM * 2 / 3) + 127;
+    Linear_serial = (twist_linear * 60 / PI / wheelsize * 2 ) + 127;
+    angular_serial = (twist_angular * radpersec_to_RPM * 2 ) + 127;
 }
 
 bool Chic_m4k::serial_connect()
