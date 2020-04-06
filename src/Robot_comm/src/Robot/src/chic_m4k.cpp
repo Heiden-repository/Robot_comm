@@ -68,7 +68,6 @@ bool Chic_m4k::serial_connect()
 
 void Chic_m4k::send_receive_serial()
 {
-        encoder_mtx.lock();
         memset(send_serial_protocol, 0, send_serial_protocol_size);
         send_serial_protocol[0] = 0xFF;
         send_serial_protocol[1] = 0x07;
@@ -94,11 +93,6 @@ void Chic_m4k::send_receive_serial()
         // for (int i = 0; i < read_size; i++)
         //     printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
 
-        encoder_mtx.unlock();
-}
-
-void Chic_m4k::get_val()
-{
 }
 
 void Chic_m4k::receive_encoder()
@@ -119,8 +113,8 @@ void Chic_m4k::receive_encoder()
                 {
                     if (length[0] == 0x0D)
                     {
-                        int data_size = read(serial_port, encoder_protocol, 11);
-                        if (data_size == 11)
+                        int data_size = read(serial_port, encoder_protocol, 10);
+                        if (data_size == 10)
                         {
                             int s1 = encoder_protocol[2] & 0xFF;
                             int s2 = encoder_protocol[3] & 0xFF;
@@ -193,24 +187,6 @@ void Chic_m4k::count_revolution()
     odom_generator(difference_Lencoder, difference_Rencoder);
 }
 
-// void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
-// {
-//     counter2dist = (wheelsize * PI) / (double)encoder_per_wheel;
-
-//     dist_R = difference_Lencoder * counter2dist;
-//     dist_L = difference_Rencoder * counter2dist;
-
-//     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d ", difference_Lencoder, difference_Rencoder);
-//     //printf("dist_R : %3.2lf dist_L : %3.2lf ",dist_R, dist_L);
-
-//     double gap_radian = (dist_R - dist_L) / wheelbase;
-//     double gap_dist = (dist_R + dist_L) / 2.0;
-//     double gap_x = cos(gap_radian) * gap_dist;
-//     double gap_y = sin(gap_radian) * gap_dist;
-//     double gap_th = gap_radian / PI * 180.0 * (-1);
-
-//     add_motion(gap_x, gap_y, gap_th);
-// }
 
 void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
@@ -239,17 +215,6 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
     //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, degree_th);
 }
 
-// void Chic_m4k::add_motion(double &x, double &y, double &th)
-// {
-//     _th = _th + th;
-//     angleRearange();
-//     double base_radian_th = angle2radian * _th;
-
-//     _x = _x + x * cos(base_radian_th) - y * sin(base_radian_th);
-//     _y = _y + x * sin(base_radian_th) + y * cos(base_radian_th);
-
-//     //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
-//}
 
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
@@ -266,8 +231,8 @@ void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, do
     error_motion.at<double>(2, 1) = -1/wheelbase;
 
     cv::Mat covar_for_count = cv::Mat::zeros(2,2,CV_64F);
-    covar_for_count.at<double>(0,0) = covar_const_right * abs(dist_R);
-    covar_for_count.at<double>(1,1) = covar_const_left * abs(dist_L);
+    covar_for_count.at<double>(0,0) = covar_const_right * fabs(dist_R);
+    covar_for_count.at<double>(1,1) = covar_const_left * fabs(dist_L);
 
     _covar = error_pos * _covar * error_pos + error_motion * covar_for_count * error_motion.t();
 

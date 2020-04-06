@@ -87,8 +87,6 @@ private:
     //Subscriber
     ros::Subscriber twist_msg_sub_;
 
-    std::mutex encoder_mtx;
-
     void initValue(void);
     void initSubscriber(ros::NodeHandle& nh_);
     void initPublisher(ros::NodeHandle &nh_);
@@ -99,7 +97,6 @@ private:
     void count_revolution(void);
     void odom_generator(int& difference_Lencoder,int& difference_Rencoder);
 
-    void get_val();
     void angleRearange();
 
     void odom_arrange(tf::TransformBroadcaster& odom_broadcaster);
