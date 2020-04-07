@@ -17,7 +17,7 @@
 #define JOY_AXES_AMOUNT 6
 
 #define send_serial_protocol_size 7
-#define recv_serial_protocol_size 6
+#define recv_serial_protocol_size 13
 #define encoder_protocol_size 13
 #define buffer_size 24
 #define gear_ratio 6.2
@@ -30,8 +30,8 @@
 #define wheelsize 0.19
 #define wheelbase 0.51
 
-#define covar_const_right 1
-#define covar_const_left 1
+#define covar_const_right 0.05
+#define covar_const_left 0.05
 
 #define radpersec_to_RPM 9.54929659
 

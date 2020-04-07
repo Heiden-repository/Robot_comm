@@ -66,7 +66,7 @@ bool Chic_m4k::serial_connect()
 
 void Chic_m4k::send_receive_serial()
 {
-        encoder_mtx.lock();
+        //encoder_mtx.lock();
         memset(send_serial_protocol, 0, send_serial_protocol_size);
         send_serial_protocol[0] = 0xFF;
         send_serial_protocol[1] = 0x07;
@@ -81,76 +81,191 @@ void Chic_m4k::send_receive_serial()
         {
             int write_size = write(serial_port, send_serial_protocol, send_serial_protocol_size);
 
-//            printf("write_size : %d\n", write_size);
+            //printf("write_size : %d\n", write_size);
         }
 
         memset(receive_serial_protocol, 0, recv_serial_protocol_size);
 
-        int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
+        // int read_size = read(serial_port, receive_serial_protocol, recv_serial_protocol_size);
 
-        //printf("read_size : %d\n", read_size);
-        // for (int i = 0; i < read_size; i++)
-        //     printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+        // //printf("read_size : %d\n", read_size);
+        //  for (int i = 0; i < read_size; i++)
+        //      printf("receive_serial_protocol[%d] : %u\n", i, receive_serial_protocol[i]);
+        receive_encoder();
 
-        encoder_mtx.unlock();
+        //encoder_mtx.unlock();
 }
 
 void Chic_m4k::get_val()
 {
 }
 
+// void Chic_m4k::receive_encoder()
+// {
+
+//     int receive_data = -1;
+//     int buf_end = 0;
+//     unsigned char buf[256];
+//     unsigned char temp_buf[256];
+//     receive_data = read(serial_port, temp_buf, 256);
+    
+//     memcpy(&buf[buf_end], temp_buf, receive_data);
+//     buf_end += receive_data;
+
+//     for (int i = 0; i < buf_end; i++)
+//     {
+//         if (i + 13 > buf_end)
+//             break;
+
+//         if (buf[i] == 0xFF)
+//             if (buf[i + 1] == 0x0D)
+//                 if (buf[i + 2] == 0x03)
+//                     if (buf[i + 3] == 0x05)
+//                     {
+
+//                         int s1 = buf[i + 4] & 0xFF;
+//                         int s2 = buf[i + 5] & 0xFF;
+//                         int s3 = buf[i + 6] & 0xFF;
+//                         int s4 = buf[i + 7] & 0xFF;
+//                         LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+//                         s1 = buf[i + 8] & 0xFF;
+//                         s2 = buf[i + 9] & 0xFF;
+//                         s3 = buf[i + 10] & 0xFF;
+//                         s4 = buf[i + 11] & 0xFF;
+//                         REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+//                         int remain_size = buf_end - i - 13;
+//                         //printf("LEncoder : %5d REncoder : %5d\n", LEncoder, REncoder);
+//                         count_revolution();
+//                         if (remain_size != 0)
+//                         {
+//                             memcpy(temp_buf, buf, 256);
+//                             memcpy(buf, &temp_buf[i + 13], remain_size);
+//                             i = -1;
+//                             buf_end = remain_size;
+//                         }
+//                         else
+//                         {
+//                             buf_end = 0;
+//                             break;
+//                         }
+//                     }
+//     }
+// }
 void Chic_m4k::receive_encoder()
 {
 
     int receive_data = -1;
     int buf_end = 0;
-    unsigned char buf[256];
-    unsigned char temp_buf[256];
-    receive_data = read(serial_port, temp_buf, 256);
-    
-    memcpy(&buf[buf_end], temp_buf, receive_data);
-    buf_end += receive_data;
+    unsigned char start_buf[1] = {};
+    unsigned char size_buf[1] = {};
+    unsigned char data_buf[13]={};
+    receive_data = read(serial_port, start_buf, 1);
+    //printf("receive_encoder  data_buf[0]: %u\n", start_buf[0]);
 
-    for (int i = 0; i < buf_end; i++)
+    if(receive_data < 0)
     {
-        if (i + 13 > buf_end)
-            break;
-
-        if (buf[i] == 0xFF)
-            if (buf[i + 1] == 0x0D)
-                if (buf[i + 2] == 0x03)
-                    if (buf[i + 3] == 0x05)
-                    {
-
-                        int s1 = buf[i + 4] & 0xFF;
-                        int s2 = buf[i + 5] & 0xFF;
-                        int s3 = buf[i + 6] & 0xFF;
-                        int s4 = buf[i + 7] & 0xFF;
-                        LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-
-                        s1 = buf[i + 8] & 0xFF;
-                        s2 = buf[i + 9] & 0xFF;
-                        s3 = buf[i + 10] & 0xFF;
-                        s4 = buf[i + 11] & 0xFF;
-                        REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
-
-                        int remain_size = buf_end - i - 13;
-                        //printf("LEncoder : %5d REncoder : %5d\n", LEncoder, REncoder);
-                        count_revolution();
-                        if (remain_size != 0)
-                        {
-                            memcpy(temp_buf, buf, 256);
-                            memcpy(buf, &temp_buf[i + 13], remain_size);
-                            i = -1;
-                            buf_end = remain_size;
-                        }
-                        else
-                        {
-                            buf_end = 0;
-                            break;
-                        }
-                    }
+         //printf("receive_data error \n");
+        return;
     }
+
+    if (start_buf[0] == 0xFF)
+    {
+        receive_data = read(serial_port, size_buf, 1);
+        //printf("receive_encoder  data_buf[1]: %u\n", start_buf[0]);
+        if (receive_data > 0 && size_buf[0] == 0x0D)
+        {
+            receive_data = read(serial_port, data_buf, 11);
+            for (int i = 0; i < receive_data; i++)
+                //printf("receive_encoder  data_buf[%d] : %u\n", i+2, data_buf[i]);
+
+            if (data_buf[0] == 0x03 && data_buf[1] == 0x05)
+            {
+                int s1 = data_buf[2] & 0xFF;
+                int s2 = data_buf[3] & 0xFF;
+                int s3 = data_buf[4] & 0xFF;
+                int s4 = data_buf[5] & 0xFF;
+                LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+                s1 = data_buf[6] & 0xFF;
+                s2 = data_buf[7] & 0xFF;
+                s3 = data_buf[8] & 0xFF;
+                s4 = data_buf[9] & 0xFF;
+                REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+                count_revolution();
+            }
+            else
+            {
+                printf("data error \n");
+            }
+        }
+        else
+        {
+            if(size_buf[0] == 0x06)
+            {
+                receive_data = read(serial_port, data_buf, 4);
+            }
+            printf("return data after sending setvel [%d] [%d] [%d] [%d] [%d] [%d] \n", start_buf[0], size_buf[0], data_buf[0], data_buf[1], data_buf[2], data_buf[3]);
+            return;
+        }
+    }
+    else
+    {
+        tcflush(serial_port, TCIFLUSH);
+        printf("start_buf 0xff error %d \n", start_buf[0]);
+         
+        return;
+    }  
+    //tcflush(serial_port, TCIFLUSH);
+
+    return;
+
+
+
+    // buf_end += receive_data;
+
+    // for (int i = 0; i < buf_end; i++)
+    // {
+    //     if (i + 13 > buf_end)
+    //         break;
+
+    //     if (buf[i] == 0xFF)
+    //         if (buf[i + 1] == 0x0D)
+    //             if (buf[i + 2] == 0x03)
+    //                 if (buf[i + 3] == 0x05)
+    //                 {
+
+    //                     int s1 = buf[i + 4] & 0xFF;
+    //                     int s2 = buf[i + 5] & 0xFF;
+    //                     int s3 = buf[i + 6] & 0xFF;
+    //                     int s4 = buf[i + 7] & 0xFF;
+    //                     LEncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+    //                     s1 = buf[i + 8] & 0xFF;
+    //                     s2 = buf[i + 9] & 0xFF;
+    //                     s3 = buf[i + 10] & 0xFF;
+    //                     s4 = buf[i + 11] & 0xFF;
+    //                     REncoder = ((s1 << 24) + (s2 << 16) + (s3 << 8) + (s4 << 0));
+
+    //                     int remain_size = buf_end - i - 13;
+    //                     //printf("LEncoder : %5d REncoder : %5d\n", LEncoder, REncoder);
+    //                     count_revolution();
+    //                     if (remain_size != 0)
+    //                     {
+    //                         memcpy(temp_buf, buf, 256);
+    //                         memcpy(buf, &temp_buf[i + 13], remain_size);
+    //                         i = -1;
+    //                         buf_end = remain_size;
+    //                     }
+    //                     else
+    //                     {
+    //                         buf_end = 0;
+    //                         break;
+    //                     }
+    //                 }
+    // }
 }
 
 void Chic_m4k::count_revolution()
@@ -254,7 +369,7 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
     _y += gap_y;
 
     //double degree_th = _th / PI * 180.0;
-    printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
+    //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
 }
 
 // void Chic_m4k::add_motion(double &x, double &y, double &th)
@@ -302,29 +417,6 @@ void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, do
     _covariance[30] = _covar.at<double>(2,0);
     _covariance[31] = _covar.at<double>(2,1);
     _covariance[35] = _covar.at<double>(2,2);
-    // for(int i = 0; i <2 ; i++)
-    // {
-    //     for(int j = 0; j <2 ; j++)
-    //     {
-
-    //     }
-    // }
-
-    // for(int i = 0; i <1 ; i++)
-    // {
-    //     for(int j = 0; j <1 ; j++)
-    //     {
-            
-    //     }
-    // }
-
-    // for(int i = 0; i <2 ; i++)
-    // {
-    //     for(int j = 0; j <2 ; j++)
-    //     {
-            
-    //     }
-    // }
 }
 
 void Chic_m4k::angleRearange()
@@ -401,7 +493,7 @@ void Chic_m4k::odom_arrange(tf::TransformBroadcaster& odom_broadcaster)
 
 void Chic_m4k::runLoop()
 {
-    ros::Rate r(140);
+    ros::Rate r(50);
 
 	while (ros::ok())
     {
@@ -411,13 +503,13 @@ void Chic_m4k::runLoop()
         receive_encoder();
 
         duration_publisher++;
-        if (duration_publisher == 12)
+        if (duration_publisher == 5)
         {
             odom_arrange(odom_broadcaster);
 			send_receive_serial();
             duration_publisher = 0;
         }
-        tcflush(serial_port, TCIFLUSH);
+        
 		//printf("ros::Time.back: %d\n",ros::Time::now().nsec);
 
         r.sleep();
