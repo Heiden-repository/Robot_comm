@@ -61,7 +61,6 @@ bool Chic_m4k::serial_connect()
     tcflush(serial_port, TCIFLUSH);
     tcsetattr(serial_port, TCSANOW, &termi);
     ros::Time::now().nsec
-    printf("Robot connection\n");
 }
 
 void Chic_m4k::send_receive_serial()
@@ -272,7 +271,7 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
     cv::Mat error_pos = cv::Mat::eye(3, 3, CV_64F);
-    error_pos.at<double>(0, 2) = gap_y;
+    error_pos.at<double>(0, 2) = -gap_y;
     error_pos.at<double>(1, 2) = gap_x;
 
     cv::Mat error_motion(3, 2, CV_64F);
