@@ -24,7 +24,6 @@
 #define velocity_zero 127
 #define max_encoder_output 4096
 #define max_encoder_value_change 2048
-#define PI 3.141592
 
 #define max_vel_x 0.5
 #define min_vel_x 0.1
@@ -63,7 +62,7 @@ private:
     cv::Mat _covar = cv::Mat::zeros(3,3,CV_64F);
 
     double counter2dist;
-    double angle2radian = PI / 180.0;
+    double angle2radian = CV_PI / 180.0;
 
     //double _covariance[36];
     boost::array<double,36UL> _covariance;
@@ -114,10 +113,9 @@ public:
     void runLoop(void);
 
     Chic_m4k(ros::NodeHandle &_nh):
-    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),_x(0.0),_y(0.0),_th(0.0),REncoder(0),LEncoder(0),
-    prev_LEncoder(max_encoder_output+1),prev_REncoder(max_encoder_output+1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
-    {
-        _covariance = {0,};
+    nh_(_nh),Linear_serial(velocity_zero),angular_serial(velocity_zero),encoder_per_wheel(max_encoder_output*gear_ratio),_x(0.0),_y(0.0),_th(0.0),REncoder(0),LEncoder(0),dist_L(0.0),dist_R(0.0),
+    twist_linear(0),twist_angular(0),_covariance({0,}),prev_LEncoder(max_encoder_output+1),prev_REncoder(max_encoder_output+1),LeftEncoder(0),RightEncoder(0),Lencoder_change(0),Rencoder_change(0),temp_Lencoder_change(0),temp_Rencoder_change(0),duration_publisher(0),current_time(ros::Time::now()),last_time(ros::Time::now())
+    {    
         initValue();
         initSubscriber(nh_);
         initPublisher(nh_);
