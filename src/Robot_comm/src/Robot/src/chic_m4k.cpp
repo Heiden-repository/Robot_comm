@@ -22,6 +22,7 @@ void Chic_m4k::twist_msg_callback(const geometry_msgs::Twist::ConstPtr &_twist_m
     twist_angular = _twist_msg->angular.z;
 
     twist_convert_cmd_vel(twist_linear,twist_angular);
+    send_receive_serial();
 }
 
 void Chic_m4k::twist_convert_cmd_vel(float &twist_linear, float &twist_angular)
@@ -328,7 +329,6 @@ void Chic_m4k::runLoop()
         ros::spinOnce();
         current_time = ros::Time::now();
 
-        send_receive_serial();
         receive_encoder();
 
         duration_publisher++;
