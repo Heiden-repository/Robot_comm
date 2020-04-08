@@ -90,8 +90,8 @@ private:
     void initPublisher(ros::NodeHandle &nh_);
 
     bool serial_connect(void);
-    void send_receive_serial(void);
-    void receive_encoder(void);
+    void send_serial(void);
+    void receive_serial(void);
     void count_revolution(void);
     void odom_generator(int& difference_Lencoder,int& difference_Rencoder);
     void add_motion(double &x, double &y, double &th);
