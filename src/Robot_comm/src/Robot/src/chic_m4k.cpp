@@ -232,31 +232,6 @@ void Chic_m4k::count_revolution()
     // odom_generator(difference_Lencoder, difference_Rencoder);
 }
 
-// void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
-// {
-//     counter2dist = (wheelsize * CV_PI) / (double)encoder_per_wheel;
-
-//     double difference_Lencoder_double = difference_Lencoder;
-//     double difference_Rencoder_double = difference_Rencoder;
-
-//     dist_L = difference_Lencoder_double * counter2dist;
-//     dist_R = difference_Rencoder_double * counter2dist;
-
-//     // printf("ddifference_Lencoder_Enc : %d difference_Rencoder : %d\n", difference_Lencoder, difference_Rencoder);
-//     // printf("dist_R : %10lf dist_L : %10lf\n",dist_L, dist_R);
-
-//     double gap_radian = (dist_R - dist_L) / wheelbase;
-//     double gap_dist = (dist_R + dist_L) / 2.0;
-//     double gap_x = cos(gap_radian) * gap_dist;
-//     double gap_y = sin(gap_radian) * gap_dist;
-
-//     // printf("%5d %5d. %10.6lf %10.6lf %10.6lf\n", 
-//     //     difference_Lencoder, difference_Rencoder,
-//     //     gap_x, gap_y, gap_radian);
-
-//     add_motion(gap_x, gap_y, gap_radian);
-// }
-
 void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder)
 {
     counter2dist = (wheelsize * CV_PI) / (double)encoder_per_wheel;
@@ -286,19 +261,6 @@ void Chic_m4k::odom_generator(int& difference_Lencoder, int& difference_Rencoder
     //double degree_th = _th / PI * 180.0;
     //printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th);
 }
-
-// void Chic_m4k::add_motion(double &x, double &y, double &th)
-// {
-//     _th = _th + th;
-
-//     angleRearange();
-//  //   double base_radian_th = angle2radian * _th;
-
-//     _x = _x + x * cos(_th) - y * sin(_th);
-//     _y = _y + x * sin(_th) + y * cos(_th);
-
-//     printf("_x : %3.2lf _y : %3.2lf _th : %3.2lf \n", _x, _y, _th/CV_PI*180.0);
-// }
 
 void Chic_m4k::make_covariance(double& gap_x, double& gap_y,double& gap_dist, double& for_covarian_radian)
 {
