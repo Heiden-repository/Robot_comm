@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robot_comm)
 
- add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 #  set(CMAKE_VERBOSE_MAKEFILE yes)
 #  set(CMAKE_BUILD_TYPE Debug)
 #  set(CMAKE_CXX_FLAGS "-O0 -DNDEBUG -std=c++11")
@@ -68,16 +68,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include/robot/
 )
 
-add_executable(CHIC_M4K src/Robot/src/chic_m4k.cpp src/Robot/src/main.cpp)
+add_executable(CA_bot src/Robot/src/CA_bot.cpp src/Robot/src/main.cpp)
 
-add_dependencies(CHIC_M4K ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(CA_bot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(CHIC_M4K
+target_link_libraries(CA_bot
   ${catkin_LIBRARIES}
 )
 
 install(
-  TARGETS CHIC_M4K
+  TARGETS CA_bot
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
